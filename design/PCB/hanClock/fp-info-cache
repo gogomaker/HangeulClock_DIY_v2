@@ -1,4 +1,4 @@
-19214435287724919
+19229094473146373
 ARDUINO_NANO
 SHIELD_ARDUINO_NANO
 
@@ -83030,6 +83030,69 @@ Varistor
 RV_Disc_D21.5mm_W11.4mm_P10mm
 Varistor, diameter 21.5mm, width 11.4mm, pitch 10mm
 varistor SIOV
+0
+2
+2
+parts
+3216LED
+
+
+0
+2
+2
+parts
+BC547
+
+
+0
+3
+3
+parts
+C_K14
+
+
+0
+2
+2
+parts
+KLT_SW
+
+
+0
+4
+2
+parts
+LED_SK6812_PLCC4_5.0x5.0mm_P3.2mm
+https://cdn-shop.adafruit.com/product-files/1138/SK6812+LED+datasheet+.pdf
+LED RGB NeoPixel
+0
+4
+4
+parts
+PinSocket_1x04_P2.54mm_Horizontal
+Through hole angled socket strip, 1x04, 2.54mm pitch, 8.51mm socket length, single row (from Kicad 4.0.7), script generated
+Through hole angled socket strip THT 1x04 2.54mm single row
+0
+4
+4
+parts
+PinSocket_1x06_P2.54mm_Horizontal
+Through hole angled socket strip, 1x06, 2.54mm pitch, 8.51mm socket length, single row (from Kicad 4.0.7), script generated
+Through hole angled socket strip THT 1x06 2.54mm single row
+0
+6
+6
+parts
+SMDbutton
+
+
+0
+4
+2
+parts
+buzzer
+
+
 0
 2
 2

@@ -11,37 +11,15 @@
  항상 파이팅!
 */
 
-/*
- v1과 달라진 점:
- 1. 중앙 flicker 추가 - 3번 핀 아날로그 출력 연결
- 2. 온도 센서 추가    - 8번 핀 디지털 연결
- 3. 조도센서 추가     - A1 핀 아날로그 입력 연결
- 4. 부저 추가         - 7번 핀 디지털 연결
- 5. 각종 버튼 추가    - 추후에 고민
-*/
-
-/*
- TODO:
- 온도 센서 라이브러리 불러오기
- 코드 흐름 종이에 그리기
- 새로 추가되는 하드웨어의 연결핀 지정 및 기존 하드웨어의 핀맵 조정
- 즉, 모든 상수 및 변수의 상태를 재조정한다.
-*/
-
-/*
- 완료한 것: 
-
-*/
 
 /* 헤더파일 선언 */
-#include "src/functions.h"
+#include "src\functions\functions.h"
 
 /* 실제 변수 및 객체 선언 */
 
 // 색상표 선언
 byte color[12][3]
 {
-  {255, 255, 255},	// 하얀색
   {255, 0, 0},		// 붉은색
   {255, 94, 0},		// 선홍색
   {255, 187, 0},    // 주황색
@@ -52,11 +30,12 @@ byte color[12][3]
   {1, 0, 255},		// 파란색
   {95, 0, 255},     // 보라색
   {255, 0, 221},    // 분홍색
-  {255, 0, 100}     // 분홍과 빨강 사이 어딘가
+  {255, 0, 100},     // 분홍과 빨강 사이 어딘가
+  {255, 255, 255}	// 하얀색
 };
 
 // 네오픽셀 객체 선언
-Adafruit_NeoPixel strip(35, 6, NEO_GRBW + NEO_KHZ800);
+Adafruit_NeoPixel strip(LED_COUNT, NEOPIN, NEO_GRBW + NEO_KHZ800);
 
 //네오픽셀 관련 변수
 byte r = 255; //네오픽셀 Red
@@ -92,6 +71,14 @@ long randomBase = 0;
 bool isblinkH, isblinkM = false;
 byte tchange = 0;
 
+// 온습도 관련 변수
+
+// 알람 관련 변수
+
+// 아날로그 밝기 제어 관련 변수
+
+//플리커 관련 변수
+
 void setup() {
 	#if defined(__AVR_ATtiny85__) && (F_CPU == 16000000)
 		clock_prescale_set(clock_div_1);
@@ -110,8 +97,11 @@ void setup() {
 	strip.show();
 	
 	// 버튼입력설정
-	pinMode(BUTTON_T, INPUT_PULLUP);
-	pinMode(BUTTON_LED, INPUT_PULLUP);
+	pinMode(MODE_SW, INPUT_PULLUP);
+	pinMode(LED_SW, INPUT_PULLUP);
+	pinMode(TIME_SW, INPUT_PULLUP);
+	pinMode(ALARM_SW, INPUT_PULLUP);
+	pinMode(BUZZER, OUTPUT);
 	
 	// 시계에 시간 출력
 	time = millis();

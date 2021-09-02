@@ -6,19 +6,32 @@
 #define __FUNCTOINS_H_
 
 // 헤더파일 선언
-#include <Arduino.h>
 #include <Adafruit_NeoPixel.h>
+#include <DHT.h>
 #include <avr/power.h>
 #ifdef __AVR__
 #endif
 #include <Wire.h>
 
-// 상수 선언
-#define DS3231_I2C_ADDRESS 104
-#define LED_PIN 13
-#define BUTTON_T 2
-#define BUTTON_LED 3
+/* 상수 선언 */
+// 핀번호 지정
+
+#define BT_RX 4     //조정 필요
+#define BT_TX 5     //조정 필요
+
+#define FLICKER 3
+#define NEOPIN 6
+#define BUZZER 7
+#define DHT 8
+#define MODE_SW 2
+#define LED_SW 9
+#define TIME_SW 10
+#define ALARM_SW 11
+#define EXT_BRIGHT A1
+
+//기타 상수
 #define LED_COUNT 35
+#define DS3231_I2C_ADDRESS 104
 #define debounceDelay 50
 #define bu_interval 1200
 

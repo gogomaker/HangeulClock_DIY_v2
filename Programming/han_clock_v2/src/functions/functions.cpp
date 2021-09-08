@@ -75,33 +75,34 @@ void ledclear() {
 	strip.show();
 }
 
-void changeTimeButton() {
-	int reading = digitalRead(2);
-	if (reading != last_bu_state[0]) {
-		LastDebounceTime[0] = time;
+void changeModeSW() {
+	
+}
+
+void changeAlarmSW() {
+
+}
+
+void changeTimeSW() {
+	bool reading = digitalRead(TIME_SW);		// 버튼 상태 읽기
+	if (reading != l_deb_tme[TME_INDEX]) {	// 버튼 바운싱 걸러냄
+		l_deb_tme[TME_INDEX] = time;
 	}
-	if ((time - LastDebounceTime[0]) > debounceDelay) {
-		if (reading != bu_state[0]) {
-			bu_state[0] = reading;
-			if (bu_state[0] == LOW) {
+	if ((time - l_deb_tme[TME_INDEX]) > DEB_DLY) {	// 디바운스가 아닌 진짜 버튼 눌림이면
+		if (reading != bu_stat[TME_INDEX]) {	//저장되 있는 버튼 값과 현재 버튼의 상태가 다르다면
+			bu_stat[TME_INDEX] = reading;
+			if (bu_stat[TME_INDEX] == LOW) {	//버튼이 눌렸다면
 				//Serial.println("Time_pressed");
 				bu_t_w = time;
 				timeCheck = true;
 			}
-			else {
-				if (time < bu_t_w + bu_interval) {
-					if (tchange == 1) {
+			else {	//버튼이 때졌다면 / 버튼이 때 졌을 때를 기준으로 작동이 일어나기에 코드가 복잡함
+				if (time < bu_t_w + BU_INTERVAL) {		//short pressed
+					if (isTchange == true) {	//readme 기능 파트 참조
 						//Serial.println("hour plus");
 						hourPlus++;
 						if (hourPlus > 23) hourPlus = 0;
 						hour = (hourRtc + hourPlus) % 24;
-						displayTime(hour, min);
-					}
-					else if(tchange == 2) {
-						//Serial.println("min plus");
-						minPlus++;
-						if (minPlus > 59) minPlus = 0;
-						min = (minRtc + minPlus) % 60;
 						displayTime(hour, min);
 					}
 					timeCheck = false;
@@ -109,10 +110,10 @@ void changeTimeButton() {
 			}
 		}
 	}
-	last_bu_state[0] = reading;
+	l_bu_stat[TME_INDEX] = reading;
 }
 
-void changeLedButton() {
+void changeLedSW() {
 	int reading = digitalRead(3);
 	if (reading != last_bu_state[1]) {
 		LastDebounceTime[1] = time;
@@ -141,7 +142,7 @@ void changeLedButton() {
 	last_bu_state[1] = reading;
 }
 
-void longTimeButton() {
+void longTimeSW() {
 	if (timeCheck == true) {
 		if ((time - bu_t_w) >= bu_interval) {
 			tchange += 1;
@@ -179,7 +180,7 @@ void longTimeButton() {
 	}
 }
 
-void longLedButton() {
+void longLedSW() {
 	if (ledCheck == true) {
 		if ((time - bu_led_w) >= bu_interval) {
 			//Serial.println("change color");

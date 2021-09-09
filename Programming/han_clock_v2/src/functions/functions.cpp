@@ -58,14 +58,15 @@ int updateMin(int m) {
 
 void printled(int n) {
 	if (ledmode == 0) {
-		randomBase++;
-		randomSeed(randomBase);
-		byte rand = random(0, 12);
+		rSeed++;
+		randomSeed(rSeed);
+		byte rand = random(0, COLOR_CNT);
 		r = color[rand][0];
 		g = color[rand][1];
 		b = color[rand][2];
+		w = 0;
 	}
-	strip.setPixelColor(n, r, g, b);
+	strip.setPixelColor(n, r, g, b, w);
 }
 
 void ledclear() {
@@ -75,12 +76,51 @@ void ledclear() {
 	strip.show();
 }
 
+void blinkAllLED() {
+	if (isblinkLED == true) {
+		if (time >= wait_t + BLINK_INTERVAL) {
+			//Serial.println("blink!");
+			displayTime(hour, min);
+			isblinkLED = false;
+		}
+	}
+}
+
 void changeModeSW() {
 	
 }
 
 void changeAlarmSW() {
-
+	bool reading = digitalRead(ALARM_SW);		// 버튼 상태 읽기
+	if (reading != l_deb_tme[ALM_INDEX]) {	// 버튼 바운싱 걸러냄
+		l_deb_tme[ALM_INDEX] = time;
+	}
+	if ((time - l_deb_tme[ALM_INDEX]) > DEB_DLY) {	// 디바운스가 아닌 진짜 버튼 눌림이면
+		if (reading != sw_stat[ALM_INDEX]) {	//저장되 있는 버튼 값과 현재 버튼의 상태가 다르다면
+			sw_stat[ALM_INDEX] = reading;
+			if (sw_stat[ALM_INDEX] == LOW) {	//버튼이 눌렸다면
+				//Serial.println("Time_pressed");
+				sw_w[ALM_INDEX] = time;
+				sw_check[ALM_INDEX] = true;
+			}
+			else {	//버튼이 때졌다면 / 버튼이 때 졌을 때를 기준으로 작동이 일어나기에 코드가 복잡함
+				if (time < sw_w[ALM_INDEX] + SW_INTERVAL) {		//short pressed
+					if(isTchange == true) {	//readme 기능 파트 참조
+						//Serial.println("hour plus");
+						hourPlus++;
+						if (hourPlus > 23) hourPlus = 0;
+						hour = (hourRtc + hourPlus) % 24;
+						displayTime(hour, min);
+					}
+					if(isAchange == true) {
+						alarm_time[0]++;
+					}
+					sw_check[ALM_INDEX] = false;
+				}
+			}
+		}
+	}
+	l_sw_stat[TME_INDEX] = reading;
 }
 
 void changeTimeSW() {
@@ -89,110 +129,96 @@ void changeTimeSW() {
 		l_deb_tme[TME_INDEX] = time;
 	}
 	if ((time - l_deb_tme[TME_INDEX]) > DEB_DLY) {	// 디바운스가 아닌 진짜 버튼 눌림이면
-		if (reading != bu_stat[TME_INDEX]) {	//저장되 있는 버튼 값과 현재 버튼의 상태가 다르다면
-			bu_stat[TME_INDEX] = reading;
-			if (bu_stat[TME_INDEX] == LOW) {	//버튼이 눌렸다면
+		if (reading != sw_stat[TME_INDEX]) {	//저장되 있는 버튼 값과 현재 버튼의 상태가 다르다면
+			sw_stat[TME_INDEX] = reading;
+			if (sw_stat[TME_INDEX] == LOW) {	//버튼이 눌렸다면
 				//Serial.println("Time_pressed");
-				bu_t_w = time;
-				timeCheck = true;
+				sw_w[TME_INDEX] = time;
+				sw_check[TME_INDEX] = true;
 			}
 			else {	//버튼이 때졌다면 / 버튼이 때 졌을 때를 기준으로 작동이 일어나기에 코드가 복잡함
-				if (time < bu_t_w + BU_INTERVAL) {		//short pressed
-					if (isTchange == true) {	//readme 기능 파트 참조
+				if (time < sw_w[TME_INDEX] + SW_INTERVAL) {		//short pressed
+					if(isTchange == true) {	//readme 기능 파트 참조
 						//Serial.println("hour plus");
 						hourPlus++;
 						if (hourPlus > 23) hourPlus = 0;
 						hour = (hourRtc + hourPlus) % 24;
 						displayTime(hour, min);
 					}
-					timeCheck = false;
+					if(isAchange == true) {
+						alarm_time[0]++;
+						if(alarm_time[0] > 23) alarm_time[0] = 0;
+					}
+					sw_check[TME_INDEX] = false;
 				}
 			}
 		}
 	}
-	l_bu_stat[TME_INDEX] = reading;
+	l_sw_stat[TME_INDEX] = reading;
 }
 
 void changeLedSW() {
-	int reading = digitalRead(3);
-	if (reading != last_bu_state[1]) {
-		LastDebounceTime[1] = time;
+	bool reading = digitalRead(LED_SW);
+	if (reading != l_sw_stat[LED_INDEX]) {
+		l_deb_tme[LED_INDEX] = time;
 	}
-	if ((time - LastDebounceTime[1]) > debounceDelay) {
-		if (reading != bu_state[1]) {
-			bu_state[1] = reading;
-			if (bu_state[1] == LOW) {
+	if ((time - l_deb_tme[LED_INDEX]) > DEB_DLY) {
+		if (reading != sw_stat[LED_INDEX]) {
+			sw_stat[LED_INDEX] = reading;
+			if (sw_stat[LED_INDEX] == LOW) {
 				//Serial.println("LED_pressed");
-				bu_led_w = time;
-				ledCheck = true;
+				sw_w[LED_INDEX] = time;
+				sw_check[LED_INDEX] = true;
 			}
-			else {	//�����ٸ�
-				if (time < bu_led_w + bu_interval) {
-					bright += 30;
-					if (bright > 210) bright = 30;
+			else {
+				if (time < sw_w[LED_INDEX] + SW_INTERVAL) {
+					bright += INCREASE_BRI;
+					if (bright > MAX_BRI) bright = INCREASE_BRI;
 					strip.setBrightness(bright);
 					displayTime(hour, min);
 					//Serial.print("change brightness: ");
 					//Serial.println(bright);
-					ledCheck = false;
+					sw_check[LED_INDEX] = false;
 				}
 			}
 		}
 	}
-	last_bu_state[1] = reading;
+	l_sw_stat[LED_INDEX] = reading;
 }
 
 void longTimeSW() {
-	if (timeCheck == true) {
-		if ((time - bu_t_w) >= bu_interval) {
-			tchange += 1;
-			if (tchange > 2) tchange = 0;
-			if (tchange == 1) {
-				//Serial.println("hour off");
-				wait_t = time;
-				if ((hour == 0 || hour == 12) && min == 0) {
-					printled(23);
-					strip.show();
+	if (sw_check[TME_INDEX] == true) {
+		if ((time - sw_w[TME_INDEX]) >= SW_INTERVAL) {
+			if(isAchange == false) {	//알람 설정 모드가 아닐 경우에만
+				if(isTchange == true) {
+					isTchange = false;
+					isblinkLED = true;
+					ledclear();	//LED 소등
+					blinkAllLED();
 				}
 				else {
-					strip.setPixelColor(23, 0, 0, 0);
-					strip.show();
+					isTchange == true;
+					blinkAllLED();
 				}
-				isblinkH = true;
 			}
-			else if (tchange == 2) {
-				//Serial.println("min off");
-				wait_m = time;
-				if (min == 0) {
-					printled(0);
-					strip.show();
-				}
-				else {
-					strip.setPixelColor(0, 0, 0, 0);
-					strip.show();
-				}
-				isblinkM = true;
-			}
-			timeCheck = false;
-			//Serial.print("mode change: ");
-			//Serial.println(tchange);
 		}
 	}
 }
 
 void longLedSW() {
-	if (ledCheck == true) {
-		if ((time - bu_led_w) >= bu_interval) {
+	if (sw_check[LED_INDEX] == true) {
+		if ((time - sw_w[LED_INDEX]) >= SW_INTERVAL) {
 			//Serial.println("change color");
 			ledmode++;
-			if (ledmode > 12) ledmode = 0;
+			if (ledmode > COLOR_CNT) ledmode = 0;
 			if (ledmode > 0) {
 				r = color[ledmode][0];
 				g = color[ledmode][1];
 				b = color[ledmode][2];
+				w = color[ledmode][3];
 			}
 			displayTime(hour, min);
-			ledCheck = false;
+			sw_check[LED_INDEX] = false;
 		}
 	}
 }
@@ -295,37 +321,6 @@ float get3231Temp() {
 		//error! no data!
 	}
 	return temp3231;
-}
-
-void blinkHM() {
-	if (isblinkH == true) {
-		if (time >= wait_t + 300) {
-			//Serial.println("hour on");
-			if ((hour == 0 || hour == 12) && min == 0) {
-				strip.setPixelColor(23, 0, 0, 0);
-				strip.show();
-			}
-			else {
-				printled(23);
-				strip.show();
-			}
-			isblinkH = false;
-		}
-	}
-	if (isblinkM == true) {
-		if (time >= wait_m + 300) {
-			//Serial.println("min on");
-			if (min == 0) {
-				strip.setPixelColor(0, 0, 0, 0);
-				strip.show();
-			}
-			else {
-				printled(0);
-				strip.show();
-			}
-			isblinkM = false;
-		}
-	}
 }
 
 void showSerialTime() {

@@ -27,6 +27,8 @@
 #define TIME_SW 10
 #define ALARM_SW 11
 #define EXT_BRIGHT A1
+// 한글시계 핀
+
 // 기타 상수
 #define DHTTYPE DHT22   // DHT 22  (AM2302), AM2321
 #define LED_CNT 35

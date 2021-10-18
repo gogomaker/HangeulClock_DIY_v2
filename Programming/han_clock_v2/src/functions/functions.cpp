@@ -2,37 +2,29 @@
 
 void displayTime(int h, int m) {
 	ledclear();
-	if (!((h == 0 || h == 12) && m == 0)) {
-		updateHour(h);
-		updateMin(m);
-	}
-	else {
-		if (h == 0) {
-			printled(17);
-			printled(6);
-		}
-		else {
-			printled(6);
-			printled(5);
-		}
-	}
+	updateHour(h);
+	updateMin(m);
 	strip.show();
 }
 
 int updateHour(int h) {
-	printled(23);
-	if (h == 0 || h == 12) { printled(20); printled(22); }
-	else if (h == 1 || h == 13) { printled(30); }
-	else if (h == 2 || h == 14) { printled(31); }
-	else if (h == 3 || h == 15) { printled(32); }
-	else if (h == 4 || h == 16) { printled(33); }
-	else if (h == 5 || h == 17) { printled(34); printled(35); }
-	else if (h == 6 || h == 18) { printled(29); printled(28); }
-	else if (h == 7 || h == 19) { printled(27); printled(26); }
-	else if (h == 8 || h == 20) { printled(25); printled(24); }
-	else if (h == 9 || h == 21) { printled(18); printled(19); }
-	else if (h == 10 || h == 22) printled(20);
-	else if (h == 11 || h == 23) { printled(20); printled(21); }
+	printled(3);
+	//오전 오후 출력
+	if(h < 12) { printled(29); printled(30); }
+	else { printled(29), printled(28); }
+	//시간 출력
+	if (h == 0 || h == 12)       { printled(31); printled(26); } // 열두시
+	else if (h == 1 || h == 13)  { printled(27); }				 // 한  시
+	else if (h == 2 || h == 14)  { printled(26); }				 // 두  시
+	else if (h == 3 || h == 15)  { printled(17); }				 // 세  시
+	else if (h == 4 || h == 16)  { printled(19); }				 // 네  시
+	else if (h == 5 || h == 17)  { printled(18); printled(15); } // 다섯시
+	else if (h == 6 || h == 18)  { printled(16); printled(15); } // 여섯시
+	else if (h == 7 || h == 19)  { printled(14); printled( 7); } // 일곱시
+	else if (h == 8 || h == 20)  { printled(16); printled( 5); } // 여덟시
+	else if (h == 9 || h == 21)  { printled( 6); printled( 4); } // 아홉시
+	else if (h == 10 || h == 22) { printled(31); }				 // 열  시
+	else if (h == 11 || h == 23) { printled(31); printled(27); } // 열한시
 }
 
 int updateMin(int m) {

@@ -10,42 +10,61 @@ void displayTime(int h, int m) {
 int updateHour(int h) {
 	printled(3);
 	//오전 오후 출력
-	if(h < 12) { printled(29); printled(30); }
-	else { printled(29), printled(28); }
+	if(h < 12)	{ printled(29); printled(30); }
+	else		{ printled(29), printled(28); }
 	//시간 출력
-	if (h == 0 || h == 12)       { printled(31); printled(26); } // 열두시
-	else if (h == 1 || h == 13)  { printled(27); }				 // 한  시
-	else if (h == 2 || h == 14)  { printled(26); }				 // 두  시
-	else if (h == 3 || h == 15)  { printled(17); }				 // 세  시
-	else if (h == 4 || h == 16)  { printled(19); }				 // 네  시
-	else if (h == 5 || h == 17)  { printled(18); printled(15); } // 다섯시
-	else if (h == 6 || h == 18)  { printled(16); printled(15); } // 여섯시
-	else if (h == 7 || h == 19)  { printled(14); printled( 7); } // 일곱시
-	else if (h == 8 || h == 20)  { printled(16); printled( 5); } // 여덟시
-	else if (h == 9 || h == 21)  { printled( 6); printled( 4); } // 아홉시
-	else if (h == 10 || h == 22) { printled(31); }				 // 열  시
-	else if (h == 11 || h == 23) { printled(31); printled(27); } // 열한시
+	switch(h) {
+		case 0:		printled(31);	printled(26);	break;
+		case 1:		printled(27);					break;
+		case 2:		printled(26);					break;
+		case 3:		printled(17);					break;
+		case 4:		printled(19);					break;
+		case 5:		printled(18);	printled(15);	break;
+		case 6:		printled(16);	printled(15);	break;
+		case 7:		printled(14);	printled(7);	break;
+		case 8:		printled(16);	printled(5);	break;
+		case 9:		printled(6);	printled(4);	break;
+		case 10:	printled(31);					break;
+		case 11:	printled(31);	printled(27);	break;
+
+		case 12:	printled(31);	printled(26);	break;
+		case 13:	printled(27);					break;
+		case 14:	printled(26);					break;
+		case 15:	printled(17);					break;
+		case 16:	printled(19);					break;
+		case 17:	printled(18);	printled(15);	break;
+		case 18:	printled(16);	printled(15);	break;
+		case 19:	printled(14);	printled(7);	break;
+		case 20:	printled(16);	printled(5);	break;
+		case 21:	printled(6);	printled(4);	break;
+		case 22:	printled(31);					break;
+		case 23:	printled(31);	printled(27);	break;
+	}
 }
 
 int updateMin(int m) {
-	if(m) printled(0);
+	if(m) printled(2);
 	int ten = m / 10;
-	if      (ten == 1) { printled(12); printled(0); }
-	else if (ten == 2) { printled(12); printled(16); }
-	else if (ten == 3) { printled(12); printled(15); }
-	else if (ten == 4) { printled(12); printled(14); }
-	else if (ten == 5) { printled(12); printled(13); }
+	switch (ten) {
+		case 1:	printled(23); printled(2); break;
+		case 2:	printled(23); printled(32); break;
+		case 3:	printled(23); printled(33); break;
+		case 4:	printled(23); printled(25); break;
+		case 5:	printled(23); printled(24); break;
+	}
 
 	m -= ten * 10;
-	if      (m == 1) printled(7);
-	else if (m == 2) printled(8);
-	else if (m == 3) printled(9);
-	else if (m == 4) printled(10);
-	else if (m == 5) printled(4);
-	else if (m == 6) printled(11);
-	else if (m == 7) printled(3);
-	else if (m == 8) printled(2);
-	else if (m == 9) printled(1);
+	switch (m) {
+		case 1:	printled(20);	break;
+		case 2:	printled(21);	break;
+		case 3:	printled(22);	break;
+		case 4:	printled(11);	break;
+		case 5: printled(22);	break;
+		case 6:	printled(9);	break;
+		case 7:	printled(12);	break;
+		case 8:	printled(10);	break;
+		case 9:	printled(13);	break;
+	}
 }
 
 void printled(int n) {
@@ -63,7 +82,7 @@ void printled(int n) {
 
 void ledclear() {
 	for (int i = 0; i < strip.numPixels(); i++) {
-		strip.setPixelColor(i, 0, 0, 0);
+		strip.setPixelColor(i, 0, 0, 0, 0);
 	}
 	strip.show();
 }

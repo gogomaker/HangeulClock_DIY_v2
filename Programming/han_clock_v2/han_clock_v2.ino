@@ -143,8 +143,19 @@ void loop() {
 	}
 	/* 시계구동코드 */
 	//스위치 값 입력, 작은 숫자부터 모드, LED, 시간, 알람 순임.
-	for (int i = 0; i < 4; i++) {
-		sw_prcs_val[i] = sensingSW(i);
+	for (int i = 0; i < 4; i++) { sw_prcs_val[i] = sensingSW(i); }
+	if (sw_prcs_val[MOD_SW]) { clock_mode = clock_mode > 1 ? 0 : + 1; }
+	if (sw_prcs_val[LED_SW] == SHORT) { changeLEDbright(); }
+	if (clock_mode == M_CLOCK) {
+		if(sw_prcs_val[LED_SW] == LONG) { changeLEDcolor(); }
+		/* 여기서부터 코딩하면 됨, 수도코드 28번줄부터
+		해야할 건 크게 어렵지 않아. 그저 수도코드 배끼면 됨.
+		다만, 기억할 점 몇가지를 적어둘께
+		1. isTchange, isAchange 는 시간 및 알람수정용 변수
+		2. 해당 파트는 적기 전에 종이에 적어서 논리적으로 되는지 검증 필요
+		3. 세부적인 기능들 전부 함수화 시켜서(코드는 지금 못 적을 지언정)
+		   관리하기 편하게 만들기...
+		4. 이상 */
 	}
 }
 

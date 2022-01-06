@@ -72,7 +72,7 @@ int updateMin(int m) {
 	}
 }
 
-// 실제로 Neopixel에 구동명령을 내리는 함수
+// 실제로 시간표시 LED에 구동명령을 내리는 함수
 void printled(int n) {
 	if (ledmode == 0) {
 		rSeed++;
@@ -86,7 +86,7 @@ void printled(int n) {
 	strip.setPixelColor(n, r, g, b, w);
 }
 
-// Neopixel을 전체 다 초기화시키는. 꺼 버리는 함수
+// 시간표시 LED를 전체 다 초기화시키는. 꺼 버리는 함수
 void ledclear() {
 	for (int i = 0; i < strip.numPixels(); i++) {
 		strip.setPixelColor(i, 0, 0, 0, 0);
@@ -123,6 +123,12 @@ int sensingSW(int index) {
 		return sw_w[index] > time - SW_INTERVAL ?  LONG : SHORT;
 	}
 }
+
+/* Function for temperature and humidity */
+
+
+/* Function for alarm */
+
 
 /* Function for RTC */
 
@@ -211,4 +217,25 @@ void showSerialTime() {
 	Serial.print(",");
 	Serial.println(minPlus);
 	Serial.println();
+}
+
+void changeLEDbright() {
+	bright = bright > MAX_BRI ? INCREASE_BRI : +INCREASE_BRI;
+	strip.setBrightness(bright);
+	displayTime(hour, min);
+	//Serial.print("change brightness: ");
+	//Serial.println(bright);
+}
+
+void changeLEDcolor() {
+	//Serial.println("change color");
+	ledmode++;
+	if (ledmode > COLOR_CNT) ledmode = 0;
+	if (ledmode > 0) {
+		r = color[ledmode][0];
+		g = color[ledmode][1];
+		b = color[ledmode][2];
+		w = color[ledmode][3];
+	}
+	displayTime(hour, min);
 }

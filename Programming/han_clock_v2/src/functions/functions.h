@@ -22,7 +22,7 @@
 #define NEOPIN 6
 #define BUZZER 7
 #define DHTPIN 8
-#define MODE_SW 2
+#define MOD_SW 2
 #define LED_SW 9
 #define TIME_SW 10
 #define ALARM_SW 11
@@ -40,10 +40,10 @@
 #define DEB_DLY 50
 #define SW_INTERVAL 1200
 #define BLINK_INTERVAL 150
-#define TME_INDEX 0
-#define LED_INDEX 1
-#define ALM_INDEX 2
-#define MOD_INDEX 3
+#define NONE 0
+#define SHORT 1
+#define LONG 2
+
 
 /* 변수 및 객체 선언 */
 // 객체선언
@@ -63,10 +63,11 @@ extern bool isResetMillis;
 extern byte tMSB, tLSB;
 extern float temp3231;
 // 스위치 관련
-extern bool sw_reading[4], sw_stat[4], l_sw_stat[4], sw_check[4];
+extern bool sw_reading[4], sw_org_stat[4], l_sw_stat[4];
 extern unsigned long l_deb_tme[4], sw_w[4];
 extern unsigned long wait_t;
 extern bool isTchange, isAchange;
+extern int swpin[4], sw_prcs_val[4];
 // 온습도 관련
 extern float temp, humi, f;
 // 알람 관련
@@ -86,13 +87,7 @@ void printled(int n);
 void ledclear();
 void blinkAllLED();
 
-void changeTimeSW();
-void changeLedSW();
-void changeModeSW();
-void changeAlarmSW();
-
-void longTimeSW();
-void longLedSW();
+int sensingSW(int index);
 
 byte decToBcd(byte val);
 void set3231Date();

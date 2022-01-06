@@ -1,6 +1,6 @@
 /*
  Name:		han_clock.ino
- Created:	2021-06-23 오후 3:341:22
+ Created:	2021-06-23 오후 3:34:22
  Author:	gogomaker
 */
 
@@ -38,18 +38,18 @@ byte color[COLOR_CNT][4]
 Adafruit_NeoPixel strip(LED_CNT, NEOPIN, NEO_GRBW + NEO_KHZ800);
 DHT dht(DHTPIN, DHTTYPE);
 
-
 //네오픽셀 관련 변수
 byte r, g, b, w = 255;	// 네오픽셀 LED
 byte bright = 180; 		// 255가 최대, 0이 최소, 7단계 제어
-byte ledmode = 0;		// 12개의 색 - 다채로운 30개 목표
+byte ledmode = 0;		// 13개의 색 - 다채로운 30개 목표
 
 //버튼 관련 변수
-bool sw_reading[4] = { HIGH, HIGH, HIGH, HIGH};	// 버튼의 실제 상태를 표현하는 변수
-bool sw_stat[4] = { HIGH, HIGH, HIGH, HIGH};	// 체터링을 거른 버튼의 상태를 표현하는 변수
-bool l_sw_stat[4] = { HIGH, HIGH , HIGH, HIGH};	// 마지막 버튼 상태
-bool sw_check[4] = {false, false, false, false};// 버튼의 짧고 긺을 측정할 때 사용하는 변수
-unsigned long l_deb_tme[4] = { 0, 0, 0, 0};		// 디바운스 시간 체킹
+int swpin[4] = {MOD_SW, LED_SW, TIME_SW, ALARM_SW};	//단순히 핀 매핑해 놓은 것 뿐
+bool sw_reading[4]  = {HIGH, HIGH, HIGH, HIGH};  // 버튼의 실제 상태를 표현하는 변수
+bool sw_org_stat[4] = {HIGH, HIGH, HIGH, HIGH};  // 체터링을 거른 버튼의 상태를 표현하는 변수
+bool l_sw_stat[4]   = {HIGH, HIGH , HIGH, HIGH}; // 마지막 버튼 상태
+int sw_prcs_val[4]  = {0, 0, 0, 0};				// 버튼을 프로그램에서 처리할 때 사용하는 값
+unsigned long l_deb_tme[4] = {0, 0, 0, 0};		// 디바운스 시간 체킹
 unsigned long sw_w[4] = {0, 0, 0, 0};			// 시간 버튼이 언제 눌렸는가
 unsigned long wait_t = 0;						// LED깜박일 때 사용
 
@@ -94,7 +94,7 @@ void setup() {
 	Wire.begin();
 
 	// 시리얼 모니터
-	Serial.begin(115200);
+	Serial.begin(9600);
 	Serial.println("Hangeul Clock v2 has turn ON");
 	Serial.println("Clock start");
 	
@@ -107,7 +107,7 @@ void setup() {
 	dht.begin();
 	
 	// 버튼입력설정
-	pinMode(MODE_SW, INPUT_PULLUP);
+	pinMode(MOD_SW, INPUT_PULLUP);
 	pinMode(LED_SW, INPUT_PULLUP);
 	pinMode(TIME_SW, INPUT_PULLUP);
 	pinMode(ALARM_SW, INPUT_PULLUP);
@@ -123,19 +123,17 @@ void setup() {
 }
 
 void loop() {
+	/* 사전설정 */ 
 	time = millis();
 	get3231Date();
 	if (!sec && !minRtc && !hourRtc) {	//millis 초기화
 		if(!timer0_millis) isResetMillis = true;
 		if (isResetMillis == true) {
 			//Serial.println("Timer reset");
-			l_deb_tme[ALM_INDEX] = 0;
-			l_deb_tme[LED_INDEX] = 0;
-			l_deb_tme[TME_INDEX] = 0;
-			l_deb_tme[MOD_INDEX] = 0;
-			sw_w[0] = 0;
-			sw_w[1] = 0;
-			sw_w[2] = 0;
+			for(int i = 0; i < 4; i++) {
+				l_deb_tme[i] = 0;
+				sw_w[i] = 0;
+			}
 			sw_w[3] = 0;
 			wait_t = 0;
 			time = 0;
@@ -143,39 +141,26 @@ void loop() {
 			isResetMillis = false;
 		}
 	}
-	
-	if(clock_mode == 0) { // 시간 표시 모드
-		//매 초마다 시계 기능 작동
-		if (sec != lastSec) {
-			hour = (hourRtc + hourPlus) % 24;
-			min = (minRtc + minPlus) % 60;
-			if (!sec) {	//매 0초마다(1분 간격으로)
-				if (hourPlus || minPlus) {
-					//Serial.println("RTC set");
-					set3231Date();
-				}
-				displayTime(hour, min);
-				//Serial.println("updated");
+	/* 시계구동코드 */
+	//스위치 값 입력, 작은 숫자부터 모드, LED, 시간, 알람 순임.
+	for (int i = 0; i < 4; i++) {
+		sw_prcs_val[i] = sensingSW(i);
+	}
+}
+
+void showClock() {
+	//매 초마다 시계 기능 작동
+	if (sec != lastSec) {
+		hour = (hourRtc + hourPlus) % 24;
+		min = (minRtc + minPlus) % 60;
+		if (!sec) {	//매 0초마다(1분 간격으로)
+			if (hourPlus || minPlus) {
+				//Serial.println("RTC set");
+				set3231Date();
 			}
-			lastSec = sec;
+			displayTime(hour, min);
+			//Serial.println("updated");
 		}
-		
-		/* 모든 스위치는 시계 모드에서만 작동 */
-		//버튼 눌림 감지 함수
-		changeModeSW();
-		changeLedSW();
-		changeTimeSW();
-		changeAlarmSW();
-		//버튼 길게 눌림 감지 함수
-		longTimeSW();
-		longLedSW();
-		//시간 변경 시 LED깜박임
-		blinkAllLED();
-	}
-	else if(clock_mode == 1) { // 온도 표시 모드
-
-	}
-	else { // 습도 표시 모드
-
+		lastSec = sec;
 	}
 }

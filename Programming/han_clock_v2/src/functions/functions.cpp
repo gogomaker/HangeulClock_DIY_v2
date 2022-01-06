@@ -1,5 +1,8 @@
 #include "functions.h"
 
+/* Function for Displaying Time */
+
+// 시간을 출력하는 함수
 void displayTime(int h, int m) {
 	ledclear();
 	updateHour(h);
@@ -7,6 +10,7 @@ void displayTime(int h, int m) {
 	strip.show();
 }
 
+// 시간을 업데이트, 즉 시단위를 표시하는 함수이다
 int updateHour(int h) {
 	printled(3);
 	//오전 오후 출력
@@ -42,6 +46,7 @@ int updateHour(int h) {
 	}
 }
 
+// 분을 업데이트, 즉 분단위를 표시하는 함수이다
 int updateMin(int m) {
 	if(m) printled(2);
 	int ten = m / 10;
@@ -67,6 +72,7 @@ int updateMin(int m) {
 	}
 }
 
+// 실제로 Neopixel에 구동명령을 내리는 함수
 void printled(int n) {
 	if (ledmode == 0) {
 		rSeed++;
@@ -75,11 +81,12 @@ void printled(int n) {
 		r = color[rand][0];
 		g = color[rand][1];
 		b = color[rand][2];
-		w = 0;
+		w = color[rand][3];
 	}
 	strip.setPixelColor(n, r, g, b, w);
 }
 
+// Neopixel을 전체 다 초기화시키는. 꺼 버리는 함수
 void ledclear() {
 	for (int i = 0; i < strip.numPixels(); i++) {
 		strip.setPixelColor(i, 0, 0, 0, 0);
@@ -87,6 +94,7 @@ void ledclear() {
 	strip.show();
 }
 
+// 모든 시간표시 LED를 깜박이게 하는 함수, 다만 사용여부는 모르겠다(지울예정)
 void blinkAllLED() {
 	if (isblinkLED == true) {
 		if (time >= wait_t + BLINK_INTERVAL) {
@@ -97,173 +105,49 @@ void blinkAllLED() {
 	}
 }
 
-void changeModeSW() {
-	
-}
+/* Function for Sensing Switch */
 
-void changeAlarmSW() {
-	bool reading = digitalRead(ALARM_SW);		// 버튼 상태 읽기
-	if (reading != l_deb_tme[ALM_INDEX]) {	// 버튼 바운싱 걸러냄
-		l_deb_tme[ALM_INDEX] = time;
-	}
-	if ((time - l_deb_tme[ALM_INDEX]) > DEB_DLY) {	// 디바운스가 아닌 진짜 버튼 눌림이면
-		if (reading != sw_stat[ALM_INDEX]) {	//저장되 있는 버튼 값과 현재 버튼의 상태가 다르다면
-			sw_stat[ALM_INDEX] = reading;
-			if (sw_stat[ALM_INDEX] == LOW) {	//버튼이 눌렸다면
-				//Serial.println("Time_pressed");
-				sw_w[ALM_INDEX] = time;
-				sw_check[ALM_INDEX] = true;
-			}
-			else {	//버튼이 때졌다면 / 버튼이 때 졌을 때를 기준으로 작동이 일어나기에 코드가 복잡함
-				if (time < sw_w[ALM_INDEX] + SW_INTERVAL) {		//short pressed
-					if(isTchange == true) {	//readme 기능 파트 참조
-						//Serial.println("hour plus");
-						hourPlus++;
-						if (hourPlus > 23) hourPlus = 0;
-						hour = (hourRtc + hourPlus) % 24;
-						displayTime(hour, min);
-					}
-					if(isAchange == true) {
-						alarm_time[0]++;
-					}
-					sw_check[ALM_INDEX] = false;
-				}
-			}
-		}
-	}
-	l_sw_stat[TME_INDEX] = reading;
-}
+//모드스위치 센싱 함수, 다른 함수 안 사용함
+int sensingSW(int index) {
+	bool reading = digitalRead(swpin[index]);
+	if (reading != l_sw_stat[index])
+		l_deb_tme[index] = time;
+	if ((time - l_deb_tme[index]) <= DEB_DLY) { return NONE; }
+	if (reading == sw_org_stat[index]) { return NONE; }
+	sw_org_stat[index] = reading;
 
-void changeTimeSW() {
-	bool reading = digitalRead(TIME_SW);		// 버튼 상태 읽기
-	if (reading != l_deb_tme[TME_INDEX]) {	// 버튼 바운싱 걸러냄
-		l_deb_tme[TME_INDEX] = time;
-	}
-	if ((time - l_deb_tme[TME_INDEX]) > DEB_DLY) {	// 디바운스가 아닌 진짜 버튼 눌림이면
-		if (reading != sw_stat[TME_INDEX]) {	//저장되 있는 버튼 값과 현재 버튼의 상태가 다르다면
-			sw_stat[TME_INDEX] = reading;
-			if (sw_stat[TME_INDEX] == LOW) {	//버튼이 눌렸다면
-				//Serial.println("Time_pressed");
-				sw_w[TME_INDEX] = time;
-				sw_check[TME_INDEX] = true;
-			}
-			else {	//버튼이 때졌다면 / 버튼이 때 졌을 때를 기준으로 작동이 일어나기에 코드가 복잡함
-				if (time < sw_w[TME_INDEX] + SW_INTERVAL) {		//short pressed
-					if(isTchange == true) {	//readme 기능 파트 참조
-						//Serial.println("hour plus");
-						hourPlus++;
-						if (hourPlus > 23) hourPlus = 0;
-						hour = (hourRtc + hourPlus) % 24;
-						displayTime(hour, min);
-					}
-					if(isAchange == true) {
-						alarm_time[0]++;
-						if(alarm_time[0] > 23) alarm_time[0] = 0;
-					}
-					sw_check[TME_INDEX] = false;
-				}
-			}
-		}
-	}
-	l_sw_stat[TME_INDEX] = reading;
-}
-
-void changeLedSW() {
-	bool reading = digitalRead(LED_SW);
-	if (reading != l_sw_stat[LED_INDEX]) {
-		l_deb_tme[LED_INDEX] = time;
-	}
-	if ((time - l_deb_tme[LED_INDEX]) > DEB_DLY) {
-		if (reading != sw_stat[LED_INDEX]) {
-			sw_stat[LED_INDEX] = reading;
-			if (sw_stat[LED_INDEX] == LOW) {
-				//Serial.println("LED_pressed");
-				sw_w[LED_INDEX] = time;
-				sw_check[LED_INDEX] = true;
-			}
-			else {
-				if (time < sw_w[LED_INDEX] + SW_INTERVAL) {
-					bright += INCREASE_BRI;
-					if (bright > MAX_BRI) bright = INCREASE_BRI;
-					strip.setBrightness(bright);
-					displayTime(hour, min);
-					//Serial.print("change brightness: ");
-					//Serial.println(bright);
-					sw_check[LED_INDEX] = false;
-				}
-			}
-		}
-	}
-	l_sw_stat[LED_INDEX] = reading;
-}
-
-void longTimeSW() {
-	if (sw_check[TME_INDEX] == true) {
-		if ((time - sw_w[TME_INDEX]) >= SW_INTERVAL) {
-			if(isAchange == false) {	//알람 설정 모드가 아닐 경우에만
-				if(isTchange == true) {
-					isTchange = false;
-					isblinkLED = true;
-					ledclear();	//LED 소등
-					blinkAllLED();
-				}
-				else {
-					isTchange == true;
-					blinkAllLED();
-				}
-			}
-		}
+	if (sw_org_stat[index] == LOW) {
+		//Serial.println("LED_pressed");
+		sw_w[index] = time;
+	} else {
+		return sw_w[index] > time - SW_INTERVAL ?  LONG : SHORT;
 	}
 }
 
-void longLedSW() {
-	if (sw_check[LED_INDEX] == true) {
-		if ((time - sw_w[LED_INDEX]) >= SW_INTERVAL) {
-			//Serial.println("change color");
-			ledmode++;
-			if (ledmode > COLOR_CNT) ledmode = 0;
-			if (ledmode > 0) {
-				r = color[ledmode][0];
-				g = color[ledmode][1];
-				b = color[ledmode][2];
-				w = color[ledmode][3];
-			}
-			displayTime(hour, min);
-			sw_check[LED_INDEX] = false;
-		}
-	}
-}
+/* Function for RTC */
 
+// 십진수를 이진화된 십진수로 바꿔주는 함수
 byte decToBcd(byte val) {
 	return ((val / 10 * 16) + (val % 10));
 }
 
+// RTC모듈의 시간값을 세팅하는 함수
 void set3231Date() {
-	//year = (byte)((Serial.read() - 48) * 10 + (Serial.read() - 48));
-	//month = (byte)((Serial.read() - 48) * 10 + (Serial.read() - 48));
-	//date = (byte)((Serial.read() - 48) * 10 + (Serial.read() - 48));
-	//hour = (byte)((Serial.read() - 48) * 10 + (Serial.read() - 48));
-	//min = (byte)((Serial.read() - 48) * 10 + (Serial.read() - 48));
-	//sec = (byte)((Serial.read() - 48) * 10 + (Serial.read() - 48));
-	//day = (byte)(Serial.read() - 48);
 	if (!min) hour++;
 	Wire.beginTransmission(DS3231_I2C_ADDRESS);
 	Wire.write(0x00);
 	Wire.write(sec);
 	Wire.write(decToBcd(min));
 	Wire.write(decToBcd(hour));
-	//Wire.write(decToBcd(day));
-	//Wire.write(decToBcd(date));
-	//Wire.write(decToBcd(month));
-	//Wire.write(decToBcd(year));
 	Wire.endTransmission();
 
 	minPlus = hourPlus = 0;
 }
 
+// RTC모듈에서 시간값을 받는 함수
 void get3231Date() {
 	// send request to receive data starting at register 0
-	Wire.beginTransmission(DS3231_I2C_ADDRESS); // 104 is DS3231 device address
+	Wire.beginTransmission(DS3231_I2C_ADDRESS);
 	Wire.write(0x00); // start at register 0
 	Wire.endTransmission();
 	Wire.requestFrom(DS3231_I2C_ADDRESS, 7); // request seven bytes
@@ -272,48 +156,19 @@ void get3231Date() {
 		sec = Wire.read(); // get seconds
 		minRtc = Wire.read(); // get minutes
 		hourRtc = Wire.read();   // get hours
-	//	day = Wire.read();
-	//	date = Wire.read();
-	//	month = Wire.read(); //temp month
-	//	year = Wire.read();
 
 		sec = (((sec & B11110000) >> 4) * 10 + (sec & B00001111)); // convert BCD to decimal
 		minRtc = (((minRtc & B11110000) >> 4) * 10 + (minRtc & B00001111)); // convert BCD to decimal
 		hourRtc = (((hourRtc & B00110000) >> 4) * 10 + (hourRtc & B00001111)); // convert BCD to decimal (assume 24 hour mode)
-	//	day = (day & B00000111); // 1-7
-	//	date = (((date & B00110000) >> 4) * 10 + (date & B00001111)); // 1-31
-	//	month = (((month & B00010000) >> 4) * 10 + (month & B00001111)); //msb7 is century overflow
-	//	year = (((year & B11110000) >> 4) * 10 + (year & B00001111));
 	}
 	else {
 		//oh noes, no data!
 	}
-
-	/*switch (day) {
-	case 1:
-		strcpy(weekDay, "Sun");
-		break;
-	case 2:
-		strcpy(weekDay, "Mon");
-		break;
-	case 3:
-		strcpy(weekDay, "Tue");
-		break;
-	case 4:
-		strcpy(weekDay, "Wed");
-		break;
-	case 5:
-		strcpy(weekDay, "Thu");
-		break;
-	case 6:
-		strcpy(weekDay, "Fri");
-		break;
-	case 7:
-		strcpy(weekDay, "Sat");
-		break;
-	}*/
 }
 
+// RTC모듈의 온도를 받는 함수
+// 다만, 프로그래머인 나의 입장에서는 사용할 이유가 없으나,하드웨어 설계 및 
+// 유지보수시의 RTC의 온도를 체크해야 할 일이 있을 때는 요긴하게 씀.
 float get3231Temp() {
 	//temp registers (11h-12h) get updated automatically every 64s
 	Wire.beginTransmission(DS3231_I2C_ADDRESS);
@@ -334,6 +189,10 @@ float get3231Temp() {
 	return temp3231;
 }
 
+/* ETC code */
+
+// 시간을 시리얼 창에 표시할 때 사용하는 함수
+// 프로그래밍 시에 테스트 용으로만 사용하는 코드이다.
 void showSerialTime() {
 
 	Serial.print(hour, DEC);

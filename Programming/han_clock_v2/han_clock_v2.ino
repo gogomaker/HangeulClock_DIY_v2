@@ -73,10 +73,9 @@ bool isTchange = false;			// 시간수정모드 여부
 float temp, humi, f;	//온도, 습도, 화씨
 
 // 알람 관련 변수     시 분 초
-byte alarm_time[3] = {0, 0, 0};	// 시 분 초
+byte almHour, almMin, almSec = 0;	// 시 분 초
 bool isonAlarm = false;			// 알람기능이 켜져 있는가
 bool isAchange = false;			// 알람수정모드 여부
-
 // 아날로그 밝기 제어 관련 변수
 int ext_bri = map(analogRead(EXT_BRIGHT), 0, 1023, 255, 0);	// 외부 밝기값
 
@@ -148,14 +147,16 @@ void loop() {
 	if (sw_prcs_val[LED_SW] == SHORT) { changeLEDbright(); }
 	if (clock_mode == M_CLOCK) {
 		if(sw_prcs_val[LED_SW] == LONG) { changeLEDcolor(); }
-		/* 여기서부터 코딩하면 됨, 수도코드 28번줄부터
-		해야할 건 크게 어렵지 않아. 그저 수도코드 배끼면 됨.
-		다만, 기억할 점 몇가지를 적어둘께
-		1. isTchange, isAchange 는 시간 및 알람수정용 변수
-		2. 해당 파트는 적기 전에 종이에 적어서 논리적으로 되는지 검증 필요
-		3. 세부적인 기능들 전부 함수화 시켜서(코드는 지금 못 적을 지언정)
-		   관리하기 편하게 만들기...
-		4. 이상 */
+		if(isTchange) {
+			if(sw_prcs_val[TME_SW] == SHORT) { increasingHour(); }	//시단위 추가
+			if(sw_prcs_val[ALM_SW] == SHORT) { increasingMin();  }	//분단위 추가
+			if(sw_prcs_val[TME_SW] == LONG) { isTchange = false; }	//시간편집모드 종료
+		}
+		else if(isAchange) {
+			if(sw_prcs_val[TME_SW] == SHORT) { increasingAlmHour(); }	//시단위 추가
+			if(sw_prcs_val[ALM_SW] == SHORT) { increasingAlmMin();  }	//분단위 추가
+			if(sw_prcs_val[TME_SW] == LONG) { isAchange = false; }	//알람편집모드 종료
+		}
 	}
 }
 

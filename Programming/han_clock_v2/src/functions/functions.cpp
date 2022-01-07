@@ -239,3 +239,31 @@ void changeLEDcolor() {
 	}
 	displayTime(hour, min);
 }
+
+void increasingHour() {
+	//Serial.println("hour plus");
+	hourPlus = hourPlus > 23 ? 0 : +1;
+	hour = (hourRtc + hourPlus) % 24;
+	displayTime(hour, min);
+}
+
+void increasingMin() {
+	//Serial.println("min plus");
+	minPlus = minPlus > 59 ? 0 : +1;
+	min = (minRtc + minPlus) % 60;
+	displayTime(hour, min);
+}
+
+void increasingAlmHour() {
+	//Serial.println("Alarm hour plus");
+	hourPlus = hourPlus > 23 ? 0 : +1;
+	hour = (hourRtc + hourPlus) % 24;
+	displayTime(hour, min);
+}
+
+void increasingAlmMin() {
+	//Serial.println("Alarm min plus");
+	minPlus = minPlus > 59 ? 0 : +1;
+	min = (minRtc + minPlus) % 60;
+	displayTime(hour, min);
+}

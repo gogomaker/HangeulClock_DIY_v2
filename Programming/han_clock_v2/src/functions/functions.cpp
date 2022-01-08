@@ -151,6 +151,8 @@ void increasingAlmHour()
 	//Serial.println("Alarm hour plus");
 	almHour = almHour > 23 ? 0 : +1;
 	displayTime(almHour, almMin);
+	strip.setPixelColor(34, 0, 0, 0, 230);
+	strip.show();
 }
 // 알람 분 값을 증가시키는 함수
 void increasingAlmMin()
@@ -158,14 +160,44 @@ void increasingAlmMin()
 	//Serial.println("Alarm min plus");
 	almMin = almMin > 59 ? 0 : +1;
 	displayTime(almHour, almMin);
+	strip.setPixelColor(34, 0, 0, 0, 230);
+	strip.show();
 }
 // 알람 편집모드 시작시키는 함수
 void startAchange()
 {
 	isAchange = true;
-	ledclear();
-	printled(34);
 	displayTime(almHour, almMin);
+	strip.setPixelColor(34, 0, 0, 0, 230);
+	strip.show();
+}
+// 알람 편집모드 종료시키는 함수
+void endAchange()
+{
+	isAchange = false;
+	displayTime(hour, min);
+}
+// 알람의 현재 상태를 바꾸고 상태를 보여주는 함수
+void changeAlmStat()
+{
+	isonAlarm = !isonAlarm;
+	ledclear();
+	if(isonAlarm) {
+		for(int i = 0; i < 8; i++) {
+			strip.setPixelColor(shapeO[i], 0, 160, 0, 0);			//녹색
+		}
+	}
+	else {
+		for(int i = 0; i < 8; i++) {
+			strip.setPixelColor(shapeX[i], 230, 127, 19, 0);	//주황
+		}
+	}
+	strip.show();
+	// 여기에 유일하게 딜레이를 넣은 이유는 간단하다. 
+	// 알람의 상태를 보여줄 때는 굳이 다른 동작들을 해야 할 이유가 없는 것.
+	delay(1500);	//시계 구동에 문제있을 시 1000의 배수로 전환(ex.1000ms or 2000ms)
+	ledclear();
+	displayTime(hour, min);
 }
 
 /* Function for controlling time */
@@ -177,6 +209,8 @@ void increasingHour()
 	hourPlus = hourPlus > 23 ? 0 : +1;
 	hour = (hourRtc + hourPlus) % 24;
 	displayTime(hour, min);
+	strip.setPixelColor(34, 0, 0, 0, 230);
+	strip.show();
 }
 // 분 값을 증가시키는 함수
 void increasingMin()
@@ -185,6 +219,8 @@ void increasingMin()
 	minPlus = minPlus > 59 ? 0 : +1;
 	min = (minRtc + minPlus) % 60;
 	displayTime(hour, min);
+	strip.setPixelColor(34, 0, 0, 0, 230);
+	strip.show();
 }
 // 시간 편집모드 시작시키는 함수
 void startTchange()
@@ -192,6 +228,14 @@ void startTchange()
 	isTchange = true;
 	ledclear();
 	printled(34);
+	displayTime(hour, min);
+	strip.setPixelColor(34, 0, 0, 0, 230);
+	strip.show();
+}
+// 시간 편집모드 종료시키는 함수
+void endTchange()
+{
+	isAchange = false;
 	displayTime(hour, min);
 }
 

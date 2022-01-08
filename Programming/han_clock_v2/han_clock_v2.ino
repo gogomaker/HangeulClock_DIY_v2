@@ -34,6 +34,23 @@ byte color[COLOR_CNT][4]
   {255, 0  , 100, 0  }		// 분홍과 빨강 사이 어딘가
 };
 
+// 형상에 대한 배열 선언
+byte shapeO[8] = {7, 8, 12, 21, 25, 26, 18, 15};
+byte shapeX[8] = {27, 19, 13, 9, 24, 20, 14, 6};
+byte number_segment[10][13]
+{
+	{31, 30, 29, 28, 17, 16,  5,  6,  7, 14, 19, 26,  0},	// 0	
+	{30, 31, 26, 19, 14,  7,  0,  0,  0,  0,  0,  0,  0},	// 1
+	{29, 30, 31, 26, 19, 18, 17, 16,  5,  6,  7,  0,  0},	// 2
+	{29, 30, 31, 26, 19, 14,  7,  6,  5,  0,  0,  0,  0},	// 3
+	{29, 28, 17, 18, 19, 31, 26, 14,  7,  0,  0,  0,  0},	// 4
+	{31, 30, 29, 28, 17, 18, 19, 14,  7,  6,  5,  0,  0},	// 5
+	{31, 30, 29, 28, 17, 16,  5,  6,  7, 14, 19, 18,  0}, // 6
+	{17, 28, 29, 30, 31, 26, 19, 14,  7,  0,  0,  0,  0},	// 7
+	{26, 31, 30, 29, 28, 17, 18, 19, 14,  7,  6,  5, 16},	// 8
+	{18, 17, 28, 29, 30, 31, 26, 19, 14,  7,  6,  5,  0}	// 9
+};
+
 // 객체 선언
 Adafruit_NeoPixel strip(LED_CNT, NEOPIN, NEO_GRBW + NEO_KHZ800);
 DHT dht(DHTPIN, DHTTYPE);
@@ -66,7 +83,6 @@ byte minRtc, hourRtc = 0; 		// RTC의 시간값
 byte min, hour = 0;   			// 실제 시간값
 bool isResetMillis = false;		// millis오버플로우 초기화 여부
 long rSeed = 0;					// LED랜덤색상 설정 시드값
-bool isblinkLED = false;		// LED가 깜박여야 하는가 - 시간수정모드 진입시
 bool isTchange = false;			// 시간수정모드 여부
 
 // 온습도 관련 변수
@@ -76,6 +92,8 @@ float temp, humi, f;	//온도, 습도, 화씨
 byte almHour, almMin, almSec = 0;	// 시 분 초
 bool isonAlarm = false;			// 알람기능이 켜져 있는가
 bool isAchange = false;			// 알람수정모드 여부
+unsigned long l_showAstat_Time = 0;		//알람 상태를 보여주기 시작한 시간 기록 변수
+
 // 아날로그 밝기 제어 관련 변수
 int ext_bri = map(analogRead(EXT_BRIGHT), 0, 1023, 255, 0);	// 외부 밝기값
 
@@ -143,7 +161,7 @@ void loop()
 		}
 	}
 	/* 시계구동코드 */
-	//스위치 값 입력, 작은 숫자부터 모드, LED, 시간, 알람 순임.
+	// 스위치 기반 작동 코드(LED밝기 및 색상, 시간 알람 편집 등)
 	for (int i = 0; i < 4; i++) { sw_prcs_val[i] = sensingSW(i); }
 	if (sw_prcs_val[MOD_SW]) { clock_mode = clock_mode > 1 ? 0 : + 1; }
 	if (sw_prcs_val[LED_SW] == SHORT) { changeLEDbright(); }
@@ -152,19 +170,34 @@ void loop()
 		if(isTchange) {
 			if(sw_prcs_val[TME_SW] == SHORT) { increasingHour(); }	//시단위 추가
 			if(sw_prcs_val[ALM_SW] == SHORT) { increasingMin();  }	//분단위 추가
-			if(sw_prcs_val[TME_SW] == LONG) { isTchange = false; }	//시간편집모드 종료
+			if(sw_prcs_val[TME_SW] == LONG) { endTchange(); }	//시간편집모드 종료
 		}
 		else if(isAchange) {
 			if(sw_prcs_val[TME_SW] == SHORT) { increasingAlmHour(); }	//시단위 추가
 			if(sw_prcs_val[ALM_SW] == SHORT) { increasingAlmMin();  }	//분단위 추가
-			if(sw_prcs_val[TME_SW] == LONG) { isAchange = false; }	//알람편집모드 종료
+			if(sw_prcs_val[TME_SW] == LONG) { endAchange(); }	//알람편집모드 종료
 		}
 		else {
-			if(sw_prcs_val[ALM_SW] == SHORT) { isonAlarm = true; }	//알람 활성화 및 비활성화
+			if(sw_prcs_val[ALM_SW] == SHORT) { changeAlmStat(); }	//알람 활성화 및 비활성화
 			if(sw_prcs_val[TME_SW] == LONG) { startTchange(); }	//시간편집모드 시작
 			if(sw_prcs_val[TME_SW] == LONG) { startAchange(); }	//알람편집모드 시작
 		}
 	}
+	// 알람구동코드
+	if(isonAlarm) {	//알람 활성화라면
+		//만약 지금 시간이 알람이 설정된 시간이라면
+			//알람 소리 울리기
+			//알람에 적당한 화면 출력하기
+			//만약 모드 버튼이 눌렸다면
+				//알람 끄기
+	}
+	// 플리커 구동코드
+	// 이.야. 정.말. 재.밌.겠.는.걸.
+
+	// 모드기반 기능구동코드(시간표시, 온도표시, 습도표시)를 처리할 수 있게 하는 코드
+	// 알람설정기능은 시간표시기능에서만 작동, 알람설정기능이 활성화라면 모드버튼 비활성화 됨.
+	// 또한, 시간수정모드가 활성화 된 상태에서 모드전환이 이루어진다면 값은 자동저장 됨.
+	// 그리고 시간수정모드는 비활성화 됨.
 }
 
 void showClock()

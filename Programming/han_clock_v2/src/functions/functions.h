@@ -56,11 +56,14 @@
 // 객체선언
 extern Adafruit_NeoPixel strip;
 extern DHT dht;
+//형상에 대한 배열 선언
+byte shapeO[8];
+byte shapeX[8];
+byte number_segment[10][13];
 // LED 관련
 extern byte color[13][4];
 extern long rSeed;
 extern byte r, g, b, w, bright, ledmode;
-extern bool isblinkLED;
 // 시간 관련
 extern unsigned long time;
 extern byte sec, lastSec, hourPlus, minPlus, min, hour;
@@ -79,6 +82,9 @@ extern int swpin[4], sw_prcs_val[4];
 extern float temp, humi, f;
 // 알람 관련
 extern byte almHour, almMin, almSec;	// 시 분 초
+extern bool isonAlarm;			// 알람기능이 켜져 있는가
+extern bool isAchange;			// 알람수정모드 여부
+extern unsigned long l_showAstat_Time;		//알람 상태를 보여주기 시작한 시간 기록 변수
 // 아날로그 밝기 제어 관련
 extern int ext_bri;
 // 플리커 관련
@@ -111,4 +117,8 @@ void increasingAlmMin();
 void increasingAlmHour();
 void startTchange();
 void startAchange();
+void endTchange();
+void endAchange();
+void changeAlmStat();
+
 #endif

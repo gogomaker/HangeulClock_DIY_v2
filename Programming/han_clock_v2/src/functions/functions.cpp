@@ -3,15 +3,16 @@
 /* Function for Displaying Time */
 
 // 시간을 출력하는 함수
-void displayTime(int h, int m) {
+void displayTime(int h, int m)
+{
 	ledclear();
 	updateHour(h);
 	updateMin(m);
 	strip.show();
 }
-
 // 시간을 업데이트, 즉 시단위를 표시하는 함수이다
-int updateHour(int h) {
+int updateHour(int h)
+{
 	printled(3);
 	//오전 오후 출력
 	if(h < 12)	{ printled(29); printled(30); }
@@ -45,9 +46,9 @@ int updateHour(int h) {
 		case 23:	printled(31);	printled(27);	break;
 	}
 }
-
 // 분을 업데이트, 즉 분단위를 표시하는 함수이다
-int updateMin(int m) {
+int updateMin(int m)
+{
 	if(m) printled(2);
 	int ten = m / 10;
 	switch (ten) {
@@ -71,9 +72,9 @@ int updateMin(int m) {
 		case 9:	printled(13);	break;
 	}
 }
-
 // 실제로 시간표시 LED에 구동명령을 내리는 함수
-void printled(int n) {
+void printled(int n)
+{
 	if (ledmode == 0) {
 		rSeed++;
 		randomSeed(rSeed);
@@ -85,30 +86,22 @@ void printled(int n) {
 	}
 	strip.setPixelColor(n, r, g, b, w);
 }
-
 // 시간표시 LED를 전체 다 초기화시키는. 꺼 버리는 함수
-void ledclear() {
+void ledclear()
+{
 	for (int i = 0; i < strip.numPixels(); i++) {
 		strip.setPixelColor(i, 0, 0, 0, 0);
 	}
 	strip.show();
 }
 
-// 모든 시간표시 LED를 깜박이게 하는 함수, 다만 사용여부는 모르겠다(지울예정)
-void blinkAllLED() {
-	if (isblinkLED == true) {
-		if (time >= wait_t + BLINK_INTERVAL) {
-			//Serial.println("blink!");
-			displayTime(hour, min);
-			isblinkLED = false;
-		}
-	}
-}
+/* Function for temperature and humidity */
 
 /* Function for Sensing Switch */
 
-//모드스위치 센싱 함수, 다른 함수 안 사용함
-int sensingSW(int index) {
+//스위치 센싱 함수
+int sensingSW(int index)
+{
 	bool reading = digitalRead(swpin[index]);
 	if (reading != l_sw_stat[index])
 		l_deb_tme[index] = time;
@@ -124,21 +117,94 @@ int sensingSW(int index) {
 	}
 }
 
-/* Function for temperature and humidity */
+/* Function for controlling LED */
 
+// LED밝기 제어하는 함수
+void changeLEDbright()
+{
+	bright = bright > MAX_BRI ? INCREASE_BRI : +INCREASE_BRI;
+	strip.setBrightness(bright);
+	displayTime(hour, min);
+	//Serial.print("change brightness: ");
+	//Serial.println(bright);
+}
+// LED색깔 제어하는 함수
+void changeLEDcolor()
+{
+	//Serial.println("change color");
+	ledmode++;
+	if (ledmode > COLOR_CNT) ledmode = 0;
+	if (ledmode > 0) {
+		r = color[ledmode][0];
+		g = color[ledmode][1];
+		b = color[ledmode][2];
+		w = color[ledmode][3];
+	}
+	displayTime(hour, min);
+}
 
 /* Function for alarm */
 
+// 알람 시 값을 증가시키는 함수
+void increasingAlmHour()
+{
+	//Serial.println("Alarm hour plus");
+	almHour = almHour > 23 ? 0 : +1;
+	displayTime(almHour, almMin);
+}
+// 알람 분 값을 증가시키는 함수
+void increasingAlmMin()
+{
+	//Serial.println("Alarm min plus");
+	almMin = almMin > 59 ? 0 : +1;
+	displayTime(almHour, almMin);
+}
+// 알람 편집모드 시작시키는 함수
+void startAchange()
+{
+	isAchange = true;
+	ledclear();
+	printled(34);
+	displayTime(almHour, almMin);
+}
+
+/* Function for controlling time */
+
+// 시 값을 증가시키는 함수
+void increasingHour()
+{
+	//Serial.println("hour plus");
+	hourPlus = hourPlus > 23 ? 0 : +1;
+	hour = (hourRtc + hourPlus) % 24;
+	displayTime(hour, min);
+}
+// 분 값을 증가시키는 함수
+void increasingMin()
+{
+	//Serial.println("min plus");
+	minPlus = minPlus > 59 ? 0 : +1;
+	min = (minRtc + minPlus) % 60;
+	displayTime(hour, min);
+}
+// 시간 편집모드 시작시키는 함수
+void startTchange()
+{
+	isTchange = true;
+	ledclear();
+	printled(34);
+	displayTime(hour, min);
+}
 
 /* Function for RTC */
 
 // 십진수를 이진화된 십진수로 바꿔주는 함수
-byte decToBcd(byte val) {
+byte decToBcd(byte val)
+{
 	return ((val / 10 * 16) + (val % 10));
 }
-
 // RTC모듈의 시간값을 세팅하는 함수
-void set3231Date() {
+void set3231Date()
+{
 	if (!min) hour++;
 	Wire.beginTransmission(DS3231_I2C_ADDRESS);
 	Wire.write(0x00);
@@ -149,9 +215,9 @@ void set3231Date() {
 
 	minPlus = hourPlus = 0;
 }
-
 // RTC모듈에서 시간값을 받는 함수
-void get3231Date() {
+void get3231Date()
+{
 	// send request to receive data starting at register 0
 	Wire.beginTransmission(DS3231_I2C_ADDRESS);
 	Wire.write(0x00); // start at register 0
@@ -171,11 +237,11 @@ void get3231Date() {
 		//oh noes, no data!
 	}
 }
-
 // RTC모듈의 온도를 받는 함수
 // 다만, 프로그래머인 나의 입장에서는 사용할 이유가 없으나,하드웨어 설계 및 
 // 유지보수시의 RTC의 온도를 체크해야 할 일이 있을 때는 요긴하게 씀.
-float get3231Temp() {
+float get3231Temp()
+{
 	//temp registers (11h-12h) get updated automatically every 64s
 	Wire.beginTransmission(DS3231_I2C_ADDRESS);
 	Wire.write(0x11);
@@ -199,8 +265,8 @@ float get3231Temp() {
 
 // 시간을 시리얼 창에 표시할 때 사용하는 함수
 // 프로그래밍 시에 테스트 용으로만 사용하는 코드이다.
-void showSerialTime() {
-
+void showSerialTime()
+{
 	Serial.print(hour, DEC);
 	Serial.print(":");
 	Serial.print(min, DEC);
@@ -217,53 +283,4 @@ void showSerialTime() {
 	Serial.print(",");
 	Serial.println(minPlus);
 	Serial.println();
-}
-
-void changeLEDbright() {
-	bright = bright > MAX_BRI ? INCREASE_BRI : +INCREASE_BRI;
-	strip.setBrightness(bright);
-	displayTime(hour, min);
-	//Serial.print("change brightness: ");
-	//Serial.println(bright);
-}
-
-void changeLEDcolor() {
-	//Serial.println("change color");
-	ledmode++;
-	if (ledmode > COLOR_CNT) ledmode = 0;
-	if (ledmode > 0) {
-		r = color[ledmode][0];
-		g = color[ledmode][1];
-		b = color[ledmode][2];
-		w = color[ledmode][3];
-	}
-	displayTime(hour, min);
-}
-
-void increasingHour() {
-	//Serial.println("hour plus");
-	hourPlus = hourPlus > 23 ? 0 : +1;
-	hour = (hourRtc + hourPlus) % 24;
-	displayTime(hour, min);
-}
-
-void increasingMin() {
-	//Serial.println("min plus");
-	minPlus = minPlus > 59 ? 0 : +1;
-	min = (minRtc + minPlus) % 60;
-	displayTime(hour, min);
-}
-
-void increasingAlmHour() {
-	//Serial.println("Alarm hour plus");
-	hourPlus = hourPlus > 23 ? 0 : +1;
-	hour = (hourRtc + hourPlus) % 24;
-	displayTime(hour, min);
-}
-
-void increasingAlmMin() {
-	//Serial.println("Alarm min plus");
-	minPlus = minPlus > 59 ? 0 : +1;
-	min = (minRtc + minPlus) % 60;
-	displayTime(hour, min);
 }

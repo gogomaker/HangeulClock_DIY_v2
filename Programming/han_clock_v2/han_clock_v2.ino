@@ -85,7 +85,8 @@ byte flick_bri = 0;		// 플리커 밝기 변수
 //전체 모드 제어
 byte clock_mode = 0;	//0은 시계, 1은 온도, 2는 습도
 
-void setup() {
+void setup() 
+{
 	#if defined(__AVR_ATtiny85__) && (F_CPU == 16000000)
 		clock_prescale_set(clock_div_1);
 	#endif
@@ -121,7 +122,8 @@ void setup() {
 	displayTime(hour, min);
 }
 
-void loop() {
+void loop() 
+{
 	/* 사전설정 */ 
 	time = millis();
 	get3231Date();
@@ -157,10 +159,16 @@ void loop() {
 			if(sw_prcs_val[ALM_SW] == SHORT) { increasingAlmMin();  }	//분단위 추가
 			if(sw_prcs_val[TME_SW] == LONG) { isAchange = false; }	//알람편집모드 종료
 		}
+		else {
+			if(sw_prcs_val[ALM_SW] == SHORT) { isonAlarm = true; }	//알람 활성화 및 비활성화
+			if(sw_prcs_val[TME_SW] == LONG) { startTchange(); }	//시간편집모드 시작
+			if(sw_prcs_val[TME_SW] == LONG) { startAchange(); }	//알람편집모드 시작
+		}
 	}
 }
 
-void showClock() {
+void showClock()
+{
 	//매 초마다 시계 기능 작동
 	if (sec != lastSec) {
 		hour = (hourRtc + hourPlus) % 24;

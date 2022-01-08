@@ -78,7 +78,7 @@ extern int swpin[4], sw_prcs_val[4];
 // 온습도 관련
 extern float temp, humi, f;
 // 알람 관련
-byte almTime, almMin, almSec = 0;	// 시 분 초
+extern byte almHour, almMin, almSec;	// 시 분 초
 // 아날로그 밝기 제어 관련
 extern int ext_bri;
 // 플리커 관련
@@ -109,5 +109,6 @@ void increasingHour();
 void increasingMin();
 void increasingAlmMin();
 void increasingAlmHour();
-
+void startTchange();
+void startAchange();
 #endif

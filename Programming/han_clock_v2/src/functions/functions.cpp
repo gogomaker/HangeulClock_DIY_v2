@@ -63,7 +63,7 @@ int updateMin(int m)
 	switch (m) {
 		case 1:	printled(20);	break;
 		case 2:	printled(21);	break;
-		case 3:	printled(22);	break;
+		case 3:	printled(8);	break;
 		case 4:	printled(11);	break;
 		case 5: printled(22);	break;
 		case 6:	printled(9);	break;
@@ -103,17 +103,29 @@ void ledclear()
 int sensingSW(int index)
 {
 	bool reading = digitalRead(swpin[index]);
+	Serial.print(reading);
+	Serial.print("-");
 	if (reading != l_sw_stat[index])
 		l_deb_tme[index] = time;
-	if ((time - l_deb_tme[index]) <= DEB_DLY) { return NONE; }
-	if (reading == sw_org_stat[index]) { return NONE; }
+	if ((time - l_deb_tme[index]) < DEB_DLY) {
+    l_sw_stat[index] = reading;
+		return NONE; 
+	}
+	if (reading == sw_org_stat[index]) {
+    l_sw_stat[index] = reading;
+		return NONE;
+	}
 	sw_org_stat[index] = reading;
 
 	if (sw_org_stat[index] == LOW) {
-		//Serial.println("LED_pressed");
+		Serial.println("switch_pressed");
 		sw_w[index] = time;
+    l_sw_stat[index] = reading;
+		return NONE;
 	} else {
-		return sw_w[index] > time - SW_INTERVAL ?  LONG : SHORT;
+		Serial.println("switch_released");
+    l_sw_stat[index] = reading;
+		return sw_w[index] > time - SW_INTERVAL ?  SHORT : LONG;
 	}
 }
 
@@ -125,13 +137,13 @@ void changeLEDbright()
 	bright = bright > MAX_BRI ? INCREASE_BRI : +INCREASE_BRI;
 	strip.setBrightness(bright);
 	displayTime(hour, min);
-	//Serial.print("change brightness: ");
-	//Serial.println(bright);
+	Serial.print("change brightness: ");
+	Serial.println(bright);
 }
 // LED색깔 제어하는 함수
 void changeLEDcolor()
 {
-	//Serial.println("change color");
+	Serial.println("change color");
 	ledmode++;
 	if (ledmode > COLOR_CNT) ledmode = 0;
 	if (ledmode > 0) {
@@ -148,7 +160,7 @@ void changeLEDcolor()
 // 알람 시 값을 증가시키는 함수
 void increasingAlmHour()
 {
-	//Serial.println("Alarm hour plus");
+	Serial.println("Alarm hour plus");
 	almHour = almHour > 23 ? 0 : +1;
 	displayTime(almHour, almMin);
 	strip.setPixelColor(34, 0, 0, 0, 230);
@@ -157,7 +169,7 @@ void increasingAlmHour()
 // 알람 분 값을 증가시키는 함수
 void increasingAlmMin()
 {
-	//Serial.println("Alarm min plus");
+	Serial.println("Alarm min plus");
 	almMin = almMin > 59 ? 0 : +1;
 	displayTime(almHour, almMin);
 	strip.setPixelColor(34, 0, 0, 0, 230);
@@ -166,6 +178,7 @@ void increasingAlmMin()
 // 알람 편집모드 시작시키는 함수
 void startAchange()
 {
+	Serial.println("Start Alarm change");
 	isAchange = true;
 	displayTime(almHour, almMin);
 	strip.setPixelColor(34, 0, 0, 0, 230);
@@ -174,12 +187,14 @@ void startAchange()
 // 알람 편집모드 종료시키는 함수
 void endAchange()
 {
+	Serial.println("End Alarm change");
 	isAchange = false;
 	displayTime(hour, min);
 }
 // 알람의 현재 상태를 바꾸고 상태를 보여주는 함수
 void changeAlmStat()
 {
+	Serial.println("Changed alarm status");
 	isonAlarm = !isonAlarm;
 	ledclear();
 	if(isonAlarm) {
@@ -199,13 +214,38 @@ void changeAlmStat()
 	ledclear();
 	displayTime(hour, min);
 }
+// 알람 구동하는 코드
+void alarmMotion()
+{
+	if(almHour == hour && almMin == min) {
+		while(digitalRead(MOD_SW)) {
+			for(int i = 0; i < strip.numPixels(); i++) {
+				strip.setPixelColor(i, 255, 0, 0, 255);
+			}
+			strip.show();
+
+			digitalWrite(7, HIGH);
+			delay(180);
+			digitalWrite(7, LOW);
+			delay(20);
+			digitalWrite(7, HIGH);
+			delay(180);
+			digitalWrite(7, LOW);
+			delay(20);
+
+			ledclear();
+			delay(400);
+		}
+	}
+}
+
 
 /* Function for controlling time */
 
 // 시 값을 증가시키는 함수
 void increasingHour()
 {
-	//Serial.println("hour plus");
+	Serial.println("hour plus");
 	hourPlus = hourPlus > 23 ? 0 : +1;
 	hour = (hourRtc + hourPlus) % 24;
 	displayTime(hour, min);
@@ -215,7 +255,7 @@ void increasingHour()
 // 분 값을 증가시키는 함수
 void increasingMin()
 {
-	//Serial.println("min plus");
+	Serial.println("min plus");
 	minPlus = minPlus > 59 ? 0 : +1;
 	min = (minRtc + minPlus) % 60;
 	displayTime(hour, min);
@@ -225,6 +265,7 @@ void increasingMin()
 // 시간 편집모드 시작시키는 함수
 void startTchange()
 {
+	Serial.println("start time change");
 	isTchange = true;
 	ledclear();
 	printled(34);
@@ -235,6 +276,7 @@ void startTchange()
 // 시간 편집모드 종료시키는 함수
 void endTchange()
 {
+	Serial.println("end time change");
 	isAchange = false;
 	displayTime(hour, min);
 }
@@ -327,4 +369,59 @@ void showSerialTime()
 	Serial.print(",");
 	Serial.println(minPlus);
 	Serial.println();
+}
+
+void showClock()
+{
+	//매 초마다 시계 기능 작동
+	if (sec != lastSec) {
+		hour = (hourRtc + hourPlus) % 24;
+		min = (minRtc + minPlus) % 60;
+		if (!sec) {	//매 0초마다(1분 간격으로)
+			if (hourPlus || minPlus) {
+				Serial.println("RTC set");
+				set3231Date();
+			}
+			displayTime(hour, min);
+			Serial.println("updated");
+		}
+		lastSec = sec;
+		showSerialTime();
+	}
+}
+
+float showTnH(float org, bool isWhat)
+{
+	if(tempshow + 2000 < time) {
+		Serial.println("now showing temp and humi");
+		int data = (int)org;
+		int seatOne = data % 10;
+		int seatTen = (data - seatOne) / 10;
+		ledclear();
+		showSEGnum(10, seatTen, isWhat);
+		showSEGnum( 1, seatOne, isWhat);
+		strip.show();
+		tempshow = time;
+	}
+}
+
+int showSEGnum(int a, int num, bool w) {
+	int rrr, bbb;
+	if(w) {
+		rrr = 255;
+		bbb = 0;
+	} else {
+		rrr = 0;
+		bbb = 255;
+	}
+	if(a = 10) {
+		for(int i = 0; i < 13; i++) {
+			strip.setPixelColor(numberTEN_segment[num][i], rrr, 0, bbb, 0);
+		}
+	} else {
+		for(int i = 0; i < 13; i++) {
+			strip.setPixelColor(numberONE_segment[num][i], rrr, 0, bbb, 0);
+		}
+	}
+	strip.setPixelColor(0, 0, 0, 0, 0);
 }

@@ -17,7 +17,6 @@
 // 핀번호 지정
 #define BT_RX 4 // 조정 필요
 #define BT_TX 5 // 조정 필요
-
 #define FLICKER 3
 #define NEOPIN 6
 #define BUZZER 7
@@ -27,10 +26,8 @@
 #define TIME_SW 10
 #define ALARM_SW 11
 #define EXT_BRIGHT A1
-// 한글시계 핀
-
 // 기타 상수
-#define DHTTYPE DHT22           //  DHT 22 (AM2302), AM2321
+#define DHTTYPE DHT22           // DHT 22 (AM2302), AM2321
 #define LED_CNT 35              // 네오픽셀 개수
 #define DS3231_I2C_ADDRESS 104  // RTC주소
 #define COLOR_CNT 13            // 시계에서 지원하는 컬러개수
@@ -57,11 +54,12 @@
 extern Adafruit_NeoPixel strip;
 extern DHT dht;
 //형상에 대한 배열 선언
-byte shapeO[8];
-byte shapeX[8];
-byte number_segment[10][13];
+extern const byte shapeO[8];
+extern const byte shapeX[8];
+extern const byte numberTEN_segment[10][13];
+extern const byte numberONE_segment[10][13];
 // LED 관련
-extern byte color[13][4];
+extern const byte color[13][4];
 extern long rSeed;
 extern byte r, g, b, w, bright, ledmode;
 // 시간 관련
@@ -73,13 +71,16 @@ extern bool isResetMillis;
 extern byte tMSB, tLSB;
 extern float temp3231;
 // 스위치 관련
-extern bool sw_reading[4], sw_org_stat[4], l_sw_stat[4];
+extern bool sw_org_stat[4], l_sw_stat[4];
 extern unsigned long l_deb_tme[4], sw_w[4];
-extern unsigned long wait_t;
 extern bool isTchange, isAchange;
 extern int swpin[4], sw_prcs_val[4];
 // 온습도 관련
 extern float temp, humi, f;
+extern unsigned long dhtshowTime;
+extern bool isEnableShowDhtfalse;
+extern unsigned long l_tempshow;
+extern unsigned long tempshow;
 // 알람 관련
 extern byte almHour, almMin, almSec;	// 시 분 초
 extern bool isonAlarm;			// 알람기능이 켜져 있는가
@@ -120,5 +121,10 @@ void startAchange();
 void endTchange();
 void endAchange();
 void changeAlmStat();
+void alarmMotion();
+
+void showClock();
+float showTnH(float org, bool isWhat);
+int showSEGnum(int a, int n, bool w);
 
 #endif

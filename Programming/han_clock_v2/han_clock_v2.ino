@@ -66,7 +66,6 @@ const byte numberONE_segment[10][13]
 
 // 객체 선언
 Adafruit_NeoPixel strip(LED_CNT, NEOPIN, NEO_GRBW + NEO_KHZ800);
-DHT dht(DHTPIN, DHTTYPE);
 
 //네오픽셀 관련 변수
 byte r, g, b, w = 255;	// 네오픽셀 LED
@@ -139,7 +138,7 @@ void setup()
 	strip.show();
 	
 	// 온습도 센서 초기설정
-	dht.begin();
+	//dht.begin();
 	
 	// 버튼입력설정
 	pinMode(MOD_SW, INPUT_PULLUP);
@@ -163,8 +162,8 @@ void loop()
 	time = millis();
 	get3231Date();
 	if(dhtshowTime < time) {
-		float humi = dht.readHumidity();
-		float temp = dht.readTemperature();
+		//float humi = dht.readHumidity();
+		//float temp = dht.readTemperature();
 		if (isnan(temp) || isnan(humi)) {
 			// 값 읽기 실패시 시리얼 모니터 출력
 			Serial.println("Failed to read from DHT");

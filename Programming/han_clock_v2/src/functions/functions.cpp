@@ -84,7 +84,7 @@ void printled(int n)
 		b = color[rand][2];
 		w = color[rand][3];
 	}
-	strip.setPixelColor(n, r, g, b, w);
+	strip.setPixelColor(n, 180, 124, 219, 0);
 }
 // 시간표시 LED를 전체 다 초기화시키는. 꺼 버리는 함수
 void ledclear()

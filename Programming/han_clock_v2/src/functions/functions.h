@@ -6,8 +6,8 @@
 #define __FUNCTOINS_H__
 
 // 헤더파일 선언
+#include <Arduino.h>
 #include <Adafruit_NeoPixel.h>
-#include <DHT.h>
 #include <avr/power.h>
 #ifdef __AVR__
 #endif
@@ -52,7 +52,6 @@
 /* 변수 및 객체 선언 */
 // 객체선언
 extern Adafruit_NeoPixel strip;
-extern DHT dht;
 //형상에 대한 배열 선언
 extern const byte shapeO[8];
 extern const byte shapeX[8];

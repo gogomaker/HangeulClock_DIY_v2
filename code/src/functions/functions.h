@@ -8,7 +8,6 @@
 // 헤더파일 선언
 #include <Arduino.h>
 #include <Adafruit_NeoPixel.h>
-#include <avr/power.h>
 #ifdef __AVR__
 #endif
 #include <Wire.h>

@@ -1,5 +1,5 @@
 {
-    "sketch": "Programming\\han_clock_v2\\han_clock_v2.ino",
+    "sketch": "code\\code.ino",
     "configuration": "cpu=atmega328old",
     "board": "arduino:avr:nano",
     "programmer": "arduino:arduinoisp",

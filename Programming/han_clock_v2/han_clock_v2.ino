@@ -1,24 +1,20 @@
 /*
- Name:		han_clock.ino
- Created:	2021-06-23 오후 3:34:22
- Author:	gogomaker
-*/
-
-/*
- 이 프로그램은 한글시계 v2를 돌리는 프로그램이다.
- 정말이지 v1과 프로그램은 비슷할 예정이지만
- 온습도 측정 및 표시가 난관이 아닐까 싶다.
- 항상 파이팅!
+	Name:		han_clock.ino
+	Created:	2021-06-23 오후 3:34:22	
+	Author:	gogomaker
+*/ /*
+	이 프로그램은 한글시계 v2를 돌리는 프로그램이다.
+	정말이지 v1과 프로그램은 비슷할 예정이지만
+	온습도 측정 및 표시가 난관이 아닐까 싶다.
+	항상 파이팅!
 */
 
 /* 헤더파일 선언 */
 #include "src\functions\functions.h"
 
 /* 실제 변수 및 객체 선언 */
-
 // 색상표 선언 - 수정해야 함(30가지 색)
-const byte color[COLOR_CNT][4]
-{//R  , G  , B  , W  
+const byte color[COLOR_CNT][4] {//R  , G  , B  , W  
   {0  , 0  , 0  , 255},		// 하얀색(warm white)
   {200, 200, 200, 0  },		// 하얀색(cool white)
   {255, 0  , 0  , 0  },		// 붉은색
@@ -31,14 +27,12 @@ const byte color[COLOR_CNT][4]
   {1  , 0  , 255, 0  },		// 파란색
   {95 , 0  , 255, 0  },		// 보라색
   {255, 0  , 221, 0  },		// 분홍색
-  {255, 0  , 100, 0  }		// 분홍과 빨강 사이 어딘가
-};
+  {255, 0  , 100, 0  }};	// 분홍과 빨강 사이 어딘가
 
 // 형상에 대한 배열 선언
-const byte shapeO[8] = {7, 8, 12, 21, 25, 26, 18, 15};
-const byte shapeX[8] = {27, 19, 13, 9, 24, 20, 14, 6};
-const byte numberTEN_segment[10][13]
-{
+const byte shapeO[8] = {7, 8, 12, 21, 25, 26, 18, 15};		// O
+const byte shapeX[8] = {27, 19, 13, 9, 24, 20, 14, 6};		// X
+const byte numberTEN_segment[10][13] {
 	{31, 30, 29, 28, 17, 16,  5,  6,  7, 14, 19, 26,  0},	// 0
 	{30, 27, 18, 15,  6,  0,  0,  0,  0,  0,  0,  0,  0},	// 1
 	{29, 30, 31, 26, 19, 18, 17, 16,  5,  6,  7,  0,  0},	// 2
@@ -48,10 +42,8 @@ const byte numberTEN_segment[10][13]
 	{31, 30, 29, 28, 17, 16,  5,  6,  7, 14, 19, 18,  0}, // 6
 	{17, 28, 29, 30, 31, 26, 19, 14,  7,  0,  0,  0,  0},	// 7
 	{26, 31, 30, 29, 28, 17, 18, 19, 14,  7,  6,  5, 16},	// 8
-	{18, 17, 28, 29, 30, 31, 26, 19, 14,  7,  6,  5,  0}	// 9
-};
-const byte numberONE_segment[10][13]
-{
+	{18, 17, 28, 29, 30, 31, 26, 19, 14,  7,  6,  5,  0}};	// 9
+const byte numberONE_segment[10][13] {
 	{32, 33, 34, 23, 22, 11, 10,  9,  8, 13, 20, 25,  0},	// 0
 	{33, 24, 21, 12,  9,  0,  0,  0,  0,  0,  0,  0,  0},	// 1
 	{32, 33, 34, 23, 22, 21, 20, 13,  8,  9, 10,  0,  0},	// 2
@@ -61,8 +53,7 @@ const byte numberONE_segment[10][13]
 	{34, 33, 32, 25, 20, 13,  8,  9, 10, 11, 22, 21,  0},	// 6
 	{20, 25, 32, 33, 34, 23, 22, 11, 10,  0,  0,  0,  0},	// 7
 	{23, 34, 33, 32, 25, 20, 21, 22, 11, 10,  9,  8, 13},	// 8
-	{21, 20, 25, 32, 33, 34, 23, 22, 11, 10,  9,  8,  0}	// 9
-};
+	{21, 20, 25, 32, 33, 34, 23, 22, 11, 10,  9,  8,  0}};	// 9
 
 // 객체 선언
 Adafruit_NeoPixel strip(LED_CNT, NEOPIN, NEO_GRBW + NEO_KHZ800);
@@ -102,22 +93,18 @@ bool isEnableShowDht = false;
 unsigned long l_tempshow = 0;
 unsigned long tempshow = 0;
 
-
-// 알람 관련 변수     시 분 초
+// 알람 관련 변수
 byte almHour, almMin, almSec = 0;	// 시 분 초
-bool isonAlarm = false;			// 알람기능이 켜져 있는가
-bool isAchange = false;			// 알람수정모드 여부
-unsigned long l_showAstat_Time = 0;		//알람 상태를 보여주기 시작한 시간 기록 변수
-
+bool isonAlarm = false;				// 알람기능이 켜져 있는가
+bool isAchange = false;				// 알람수정모드 여부
+unsigned long l_showAstat_Time = 0;	//알람 상태를 보여주기 시작한 시간 기록 변수
 
 // 아날로그 밝기 제어 관련 변수
-int ext_bri = map(analogRead(EXT_BRIGHT), 0, 1023, 255, 0);	// 외부 밝기값
-
+int ext_bri = map(analogRead(EXT_BRIGHT), 0, 1023, MAX_BRI, 0);	// 외부 밝기값
 //플리커 관련 변수
-byte flick_bri = 0;		// 플리커 밝기 변수
-
+byte flick_bri = 0;	// 플리커 밝기 변수
 //전체 모드 제어
-byte clock_mode = 0;	//0은 시계, 1은 온도, 2는 습도
+byte clock_mode = 0;//0은 시계, 1은 온도, 2는 습도
 
 void setup() 
 {
@@ -126,12 +113,10 @@ void setup()
 	#endif
 	// I2C 통신시작
 	Wire.begin();
-
 	// 시리얼 모니터
 	Serial.begin(9600);
 	Serial.println("Hangeul Clock v2 has turn ON");
 	Serial.println("Clock start");
-	
 	// 네오픽셀 초기설정
 	strip.begin();
 	strip.setBrightness(bright);

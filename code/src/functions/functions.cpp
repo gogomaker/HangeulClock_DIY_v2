@@ -71,13 +71,13 @@ void printled(int n)			//LED에 색상 할당하는 함수
 	if (ledmode == 0) {
 		rSeed++;
 		randomSeed(rSeed);
-		byte rand = random(0, COLOR_CNT);
+		byte rand = random(1, COLOR_CNT);
 		r = color[rand][0];
 		g = color[rand][1];
 		b = color[rand][2];
 		w = color[rand][3];
 	}
-	strip.setPixelColor(n, r, g, b, 0);
+	strip.setPixelColor(n, r, g, b, w);
 }
 void ledclear()					//LED색상 초기화하는 함수
 {
@@ -93,35 +93,34 @@ void ledclear()					//LED색상 초기화하는 함수
 int sensingSW(int index)		//스위치 센싱 함수
 {
 	bool reading = digitalRead(swpin[index]);
-	Serial.print(reading);
-	Serial.print("-");
-	if (reading != l_sw_stat[index]) l_deb_tme[index] = time;
-	if ((time - l_deb_tme[index]) < DEB_DLY) {
+	if (reading != l_sw_stat[index]) 
+		l_deb_tme[index] = time;	// 스위치 값을 처음 읽고는, 바운싱인지 아닌지 확인하는 코드
+	if ((time - l_deb_tme[index]) < DEB_DLY) {		// 스위치가 바운싱되었을때는 아무것도 안 함
     	l_sw_stat[index] = reading;
 		return NONE; 
 	}
-	if (reading == sw_org_stat[index]) {
+	if (reading == sw_org_stat[index]) {			// 스위치를 읽은 값이 스위치 상태와 같다면
     	l_sw_stat[index] = reading;
 		return NONE;
 	}
 	sw_org_stat[index] = reading;
-
-	if (sw_org_stat[index] == LOW) {
+	//아래 코드는 디바운싱된 스위치의 상태애서, 스위치의 상태가 변경되었을 때 작동하는 코드이다. 
+	if (sw_org_stat[index] == LOW) {				// 스위치가 눌렸다면
 		Serial.println("switch_pressed");
 		sw_w[index] = time;
     	l_sw_stat[index] = reading;
 		return NONE;
-	} else {
+	} else {										// 스위치가 때졌다면
 		Serial.println("switch_released");
     	l_sw_stat[index] = reading;
-		return sw_w[index] > time - SW_INTERVAL ?  SHORT : LONG;
+		return (sw_w[index] > time-SW_INTERVAL) ?  LONG : SHORT;
 	}
 }
 
 /* Function for controlling LED */
 void changeLEDbright()			//LED밝기 제어하는 함수
 {
-	bright = bright > MAX_BRI ? INCREASE_BRI : +INCREASE_BRI;
+	bright = (bright >= MAX_BRI) ? INCREASE_BRI : +INCREASE_BRI;
 	strip.setBrightness(bright);
 	displayTime(hour, min);
 	Serial.print("change brightness: ");
@@ -132,7 +131,7 @@ void changeLEDcolor()			//LED색깔 제어하는 함수
 	Serial.println("change color");
 	ledmode++;
 	if (ledmode > COLOR_CNT) ledmode = 0;
-	if (ledmode > 0) {
+	if(ledmode) {
 		r = color[ledmode][0];
 		g = color[ledmode][1];
 		b = color[ledmode][2];
@@ -161,7 +160,6 @@ void increasingAlmMin()			//알람 분 값을 증가시키는 함수
 void startAchange()				//알람 편집모드 시작시키는 함수
 {
 	Serial.println("Start Alarm change");
-	isAchange = true;
 	displayTime(almHour, almMin);
 	strip.setPixelColor(34, 0, 0, 0, MAX_BRI);
 	strip.show();
@@ -169,7 +167,6 @@ void startAchange()				//알람 편집모드 시작시키는 함수
 void endAchange()				//알람 편집모드 종료시키는 함수
 {
 	Serial.println("End Alarm change");
-	isAchange = false;
 	displayTime(hour, min);
 }
 void changeAlmStat()			//알람의 현재 상태를 바꾸고 상태를 보여주는 함수
@@ -197,22 +194,19 @@ void changeAlmStat()			//알람의 현재 상태를 바꾸고 상태를 보여�
 void alarmMotion()				//알람 구동하는 코드
 {
 	if(almHour == hour && almMin == min) {
-		while(digitalRead(MOD_SW)) {
+		while(digitalRead(MOD_SW_PIN)) {
 			for(int i = 0; i < LED_CNT; i++) {
 				strip.setPixelColor(i, MAX_BRI, 0, 0, MAX_BRI);
 			}
 			strip.show();
-			digitalWrite(7, HIGH);
+			digitalWrite(BUZZER_PIN, HIGH);
 			delay(180);
-			digitalWrite(7, LOW);
-			delay(20);
-			digitalWrite(7, HIGH);
-			delay(180);
-			digitalWrite(7, LOW);
+			digitalWrite(BUZZER_PIN, LOW);
 			delay(20);
 			ledclear();
 			delay(400);
 		}
+		clock_mode = 0;
 	}
 }
 
@@ -239,29 +233,24 @@ void increasingMin()			//분 값을 증가시키는 함수
 void startTchange()				// 시간 편집모드 시작시키는 함수
 {
 	Serial.println("start time change");
-	isTchange = true;
 	ledclear();
 	printled(34);
 	displayTime(hour, min);
-	strip.setPixelColor(34, 0, 0, 0, 230);
+	strip.setPixelColor(34, 0, 0, 0, MAX_BRI);
 	strip.show();
 }
 void endTchange()				// 시간 편집모드 종료시키는 함수
 {
 	Serial.println("end time change");
-	isAchange = false;
 	displayTime(hour, min);
 }
 
 /* Function for RTC */
-
-// 십진수를 이진화된 십진수로 바꿔주는 함수
-byte decToBcd(byte val)
+byte decToBcd(byte val)			// 십진수를 이진화된 십진수로 바꿔주는 함수
 {
 	return ((val / 10 * 16) + (val % 10));
 }
-// RTC모듈의 시간값을 세팅하는 함수
-void set3231Date()
+void set3231Date()				// RTC모듈의 시간을 설정하는 함수
 {
 	if (!min) hour++;
 	Wire.beginTransmission(DS3231_I2C_ADDRESS);
@@ -272,8 +261,7 @@ void set3231Date()
 	Wire.endTransmission();
 	minPlus = hourPlus = 0;
 }
-// RTC모듈에서 시간값을 받는 함수
-void get3231Date()
+void get3231Date()				// RTC모듈에서 시간값을 받는 함수
 {
 	// send request to receive data starting at register 0
 	Wire.beginTransmission(DS3231_I2C_ADDRESS);
@@ -294,10 +282,7 @@ void get3231Date()
 		//oh noes, no data!
 	}
 }
-// RTC모듈의 온도를 받는 함수
-// 다만, 프로그래머인 나의 입장에서는 사용할 이유가 없으나,하드웨어 설계 및 
-// 유지보수시의 RTC의 온도를 체크해야 할 일이 있을 때는 요긴하게 씀.
-float get3231Temp()
+float get3231Temp()				// RTC모듈의 온도를 받는 함수
 {
 	//temp registers (11h-12h) get updated automatically every 64s
 	Wire.beginTransmission(DS3231_I2C_ADDRESS);
@@ -319,11 +304,9 @@ float get3231Temp()
 }
 
 /* ETC code */
-
-// 시간을 시리얼 창에 표시할 때 사용하는 함수
-// 프로그래밍 시에 테스트 용으로만 사용하는 코드이다.
-void showSerialTime()
+void showSerialTime()			// 시간을 시리얼 창에 표시할 때 사용하는 함수
 {
+	// 프로그래밍 시에 테스트 용으로만 사용하는 코드이다.
 	Serial.print(hour, DEC);
 	Serial.print(":");
 	Serial.print(min, DEC);
@@ -341,8 +324,24 @@ void showSerialTime()
 	Serial.println(minPlus);
 	Serial.println();
 }
+int showSEGnum(int digit, int num, bool isON) {	//세그먼트 형태로 숫자를 출력하는 함수
+	int red, blue;
+	if(isON){red = 0;	blue = 255;	} 
+	else	{red = 255;	blue = 0;	}
+	if(digit = 10) {
+		for(int i = 0; i < 13; i++) {
+			strip.setPixelColor(numberTEN_segment[num][i], red, 0, blue, 0);
+		}
+	} else {
+		for(int i = 0; i < 13; i++) {
+			strip.setPixelColor(numberONE_segment[num][i], red, 0, blue, 0);
+		}
+	}
+	strip.setPixelColor(0, 0, 0, 0, 0);
+}
 
-void showClock()
+/*메인 펑션*/
+void showClock()					// 시계모드 함수
 {
 	//매 초마다 시계 기능 작동
 	if (sec != lastSec) {
@@ -360,39 +359,41 @@ void showClock()
 		showSerialTime();
 	}
 }
-
-float showTnH(float org, bool isWhat)
+void showTnH(int mode, float c, float h)	//온습도 모드
 {
 	if(tempshow + 2000 < time) {
 		Serial.println("now showing temp and humi");
-		int data = (int)org;
+		int data;
+		if(mode == 1)	data = int(c);	//온도모드라면
+		else 			data = int(h);	//습도모드라면
 		int seatOne = data % 10;
 		int seatTen = (data - seatOne) / 10;
 		ledclear();
-		showSEGnum(10, seatTen, isWhat);
-		showSEGnum( 1, seatOne, isWhat);
+		showSEGnum(10, seatTen, mode-1);
+		showSEGnum( 1, seatOne, mode-1);
 		strip.show();
 		tempshow = time;
 	}
 }
 
-int showSEGnum(int a, int num, bool w) {
-	int rrr, bbb;
-	if(w) {
-		rrr = 255;
-		bbb = 0;
-	} else {
-		rrr = 0;
-		bbb = 255;
-	}
-	if(a = 10) {
-		for(int i = 0; i < 13; i++) {
-			strip.setPixelColor(numberTEN_segment[num][i], rrr, 0, bbb, 0);
+void startMotion() {			// 시계가 처음 시작될 때 대각선으로 불 켜지는 함수
+	
+}
+
+void blink() {
+	if(sec%2) {
+		if(isHourChange || isAlarmHourChange) {
+			//시LED를 켬
+		} else if (isMinChange || isAlarmMinChange) {
+			//분LED를 켬
 		}
+		digitalWrite(FLICKER_PIN, HIGH);
 	} else {
-		for(int i = 0; i < 13; i++) {
-			strip.setPixelColor(numberONE_segment[num][i], rrr, 0, bbb, 0);
+		if(isHourChange || isAlarmHourChange) {
+			//시LED를 끔
+		} else if (isMinChange || isAlarmMinChange) {
+			//분LED를 끔
 		}
+		digitalWrite(FLICKER_PIN, LOW);
 	}
-	strip.setPixelColor(0, 0, 0, 0, 0);
 }

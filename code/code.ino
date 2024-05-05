@@ -75,27 +75,24 @@ float temp3231;
 //시간 관련 변수
 extern volatile unsigned long timer0_millis;	// millis 오버플로우 대비 초기화
 unsigned long time = 0;			// 아두이노 내부 밀리초 값
-byte sec, lastSec = 0;			// 매 초 실행되는 기능을 위해
+byte sec, lastSec, lastClockSec = 0;	// 매 초 실행되는 기능을 위해
 byte hourPlus, minPlus = 0;		// 시간 변경 시 임시적으로 값을 저장
 byte minRtc, hourRtc = 0; 		// RTC의 시간값
 byte min, hour = 0;   			// 실제 시간값
 bool isResetMillis = false;		// millis오버플로우 초기화 여부
-bool isHourChange = false;			// 시단위 수정여부
-bool isMinChange = false;			// 분단위 수정여부
+bool isClockChange = false;			// 시간 수정여부
 
 // 온습도 관련 변수
 int8_t dhtStatus;
-float celsius, humidity;	//섭씨, 습도 
+float celsius, humidity = 0;	//섭씨, 습도 
 unsigned long dhtshowTime = 0;
 bool isEnableShowDht = false;
-unsigned long l_tempshow = 0;
 unsigned long tempshow = 0;
 
 // 알람 관련 변수
 byte almHour, almMin, almSec = 0;	// 시 분 초
 bool isonAlarm = false;				// 알람기능이 켜져 있는가
-bool isAlarmHourChange = false;				// 알람 시단위 수정여부
-bool isAlarmMinChange = false;				// 알람 분단위 수정여부
+bool isAlarmChange = false;				// 알람 시간 수정여부
 unsigned long l_showAstat_Time = 0;	//알람 상태를 보여주기 시작한 시간 기록 변수
 
 //플리커 관련 변수
@@ -145,14 +142,9 @@ void setup()
 
 void loop() 
 {
-	/* 사전설정 */ 
+	// 사전설정
 	time = millis();
 	get3231Date();
-
-	dhtStatus = dht.read();	//2초에 한 번씩만 읽히도록 코드 수정 요함.
-	celsius = dht.get_Temperature();
-	humidity = dht.get_Humidity();
-
 	if (!sec && !minRtc && !hourRtc) {	//millis 초기화
 		if(!timer0_millis) isResetMillis = true;
 		if (isResetMillis == true) {
@@ -166,19 +158,8 @@ void loop()
 		}
 	}
 
-	/* 시계구동코드 */
-
-	//깜박이기
-	if (sec != lastSec) {	// 1초마다 실행되도록
-		blink();
-		lastSec = sec;
-	}
-
 	// 알람구동코드
-	if(isonAlarm) {	//알람이 켜져 있다면
-		alarmMotion();
-	}
-
+	if(isonAlarm) alarmMotion();
 	// 스위치 센싱
 	for (int i = 0; i < 4; i++) { //4개의 스위치를 순차적으로 센싱함.
 		sw_prcs_val[i] = sensingSW(i); 
@@ -188,39 +169,18 @@ void loop()
 	Serial.println();
 	
 	//모드 변경
-	if(sw_prcs_val[MOD_SW]) 
+	if(!(isAlarmChange || isClockChange) && sw_prcs_val[MOD_SW]) 
 		clock_mode = (clock_mode == 2) ? 0 : clock_mode+1;
-	
 	//기능실행
-	if(clock_mode == 0) {
-		showClock();
-	} else {
-		showTnH(clock_mode ,celsius, humidity);
+	if(clock_mode == M_CLOCK) showClock();
+	else showTnH(clock_mode ,celsius, humidity);
+	// 1초마다 실행되는 주기적인 코드들.
+	if (sec != lastSec) {
+		blink();			// Flickering
+		dhtStatus = dht.read();	//TnH sensing
+		celsius = dht.get_Temperature();
+		humidity = dht.get_Humidity();
+		strip.show();
+		lastSec = sec;
 	}
 }
-
-//알람설정, 시간설정 중에는 모드버튼이 비활성화된다. 
-
-/*
-	// 스위치 기반 작동 코드(LED밝기 및 색상, 시간 알람 편집 등)
-
-	if (sw_prcs_val[LED_SW] == SHORT) { changeLEDbright(); }
-	if (clock_mode == M_CLOCK) {
-		if(sw_prcs_val[LED_SW] == LONG) { changeLEDcolor(); }
-		if(isTchange) {
-			if(sw_prcs_val[TME_SW] == SHORT) { increasingHour(); }	//시단위 추가
-			if(sw_prcs_val[ALM_SW] == SHORT) { increasingMin();  }	//분단위 추가
-			if(sw_prcs_val[TME_SW] == LONG) { endTchange(); }	//시간편집모드 종료
-		}
-		else if(isAchange) {
-			if(sw_prcs_val[TME_SW] == SHORT) { increasingAlmHour(); }	//시단위 추가
-			if(sw_prcs_val[ALM_SW] == SHORT) { increasingAlmMin();  }	//분단위 추가
-			if(sw_prcs_val[TME_SW] == LONG) { endAchange(); }	//알람편집모드 종료
-		}
-		else {
-			if(sw_prcs_val[ALM_SW] == SHORT) { changeAlmStat(); }	//알람 활성화 및 비활성화
-			if(sw_prcs_val[TME_SW] == LONG) { startTchange(); }	//시간편집모드 시작
-			if(sw_prcs_val[TME_SW] == LONG) { startAchange(); }	//알람편집모드 시작
-		}
-	}
-*/

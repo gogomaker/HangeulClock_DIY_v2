@@ -28,6 +28,7 @@
 // 기타 상수
 #define DHTTYPE DHT22           // DHT 22 (AM2302), AM2321
 #define LED_CNT 35              // 네오픽셀 개수
+#define COMMA 34                // 쉼표의 LED주소
 #define DS3231_I2C_ADDRESS 104  // RTC주소
 #define COLOR_CNT 14            // 시계에서 지원하는 컬러개수+1(랜덤포함)
 #define INCREASE_BRI 30         // LED의 밝기값 증가폭
@@ -59,10 +60,9 @@ extern long rSeed;
 extern byte r, g, b, w, bright, ledmode;
 // 시간 관련
 extern unsigned long time;
-extern byte sec, lastSec, hourPlus, minPlus, min, hour, minRtc, hourRtc;
+extern byte sec, lastSec, lastClockSec, hourPlus, minPlus, min, hour, minRtc, hourRtc;
 extern bool isResetMillis;
-extern bool isHourChange;			// 시단위 수정여부
-extern bool isMinChange;			// 분단위 수정여부
+extern bool isClockChange;			// 시간 수정여부
 // RTC기능 관련
 extern byte tMSB, tLSB;
 extern float temp3231;
@@ -71,15 +71,14 @@ extern bool sw_org_stat[4], l_sw_stat[4];
 extern unsigned long l_deb_tme[4], sw_w[4];
 extern int swpin[4], sw_prcs_val[4];
 // 온습도 관련
-extern float celsius, fahrenheit, humidity;	//섭씨, 화씨, 습도 
+extern float celsius, humidity;	    //섭씨, 습도 
 extern unsigned long dhtshowTime;
 extern bool isEnableShowDht;
 extern unsigned long l_tempshow, tempshow;
 // 알람 관련
 extern byte almHour, almMin, almSec;	// 시 분 초
 extern bool isonAlarm;			// 알람기능이 켜져 있는가
-extern bool isAlarmHourChange;				// 알람 시단위 수정여부
-extern bool isAlarmMinChange;				// 알람 분단위 수정여부
+extern bool isAlarmChange;				// 알람 수정여부
 extern unsigned long l_showAstat_Time;		//알람 상태를 보여주기 시작한 시간 기록 변수
 // 플리커 관련
 extern byte flick_bri;
@@ -87,39 +86,37 @@ extern byte flick_bri;
 extern byte clock_mode;
 
 /* 함수 선언 */
+// Function for Displaying Time
 void displayTime(int h, int m);
-int updateHour(int h);
-int updateMin(int m);
+void updateHour(int h);
+void updateMin(int m);
+// Function for Sensing Switch
+int sensingSW(int index);
+// Function for controlling LED
+void changeLEDbright();
+void changeLEDcolor();
 void printled(int n);
 void ledclear();
-void blinkAllLED();
-
-int sensingSW(int index);
-
+void startMotion();
+void blink();
+// Function for alarm
+void increasingAlmHour();
+void increasingAlmMin();
+void changeAlmStat();
+void changeAlmStat();
+void alarmMotion();
+// Function for controlling time
+void increasingHour();
+void increasingMin();
+// Function for RTC
 byte decToBcd(byte val);
 void set3231Date();
 void get3231Date();
 float get3231Temp();
-
+// ETC code
 void showSerialTime();
-
-void changeLEDbright();
-void changeLEDcolor();
-void increasingHour();
-void increasingMin();
-void increasingAlmMin();
-void increasingAlmHour();
-void startTchange();
-void startAchange();
-void endTchange();
-void endAchange();
-void changeAlmStat();
-void alarmMotion();
-
+void showSEGnum(int digit, int num, int isON);
+// Core Function
 void showClock();
-void showTnH(bool isWhat, float c, float h);
-int showSEGnum(int a, int n, bool w);
-
-void startMotion();
-void blink();
+void showTnH(int mode, float c, float h);
 #endif

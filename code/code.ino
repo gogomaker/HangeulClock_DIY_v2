@@ -99,6 +99,7 @@ unsigned long l_showAstat_Time = 0;	//알람 상태를 보여주기 시작한 �
 byte flick_bri = 0;	// 플리커 밝기 변수
 //전체 모드 제어
 byte clock_mode = 0;//0은 시계, 1은 온도, 2는 습도
+bool isChangeMode = false;	//모드가 바뀔 때는 화면도 업데이트 되어야지
 
 void setup() 
 {
@@ -144,7 +145,9 @@ void loop()
 {
 	// 사전설정
 	time = millis();
-	get3231Date();
+	sec = int(time/1000)%60;
+	if(sec == 60) sec = 0;
+	//get3231Date();
 	if (!sec && !minRtc && !hourRtc) {	//millis 초기화
 		if(!timer0_millis) isResetMillis = true;
 		if (isResetMillis == true) {
@@ -163,14 +166,15 @@ void loop()
 	// 스위치 센싱
 	for (int i = 0; i < 4; i++) { //4개의 스위치를 순차적으로 센싱함.
 		sw_prcs_val[i] = sensingSW(i); 
-		Serial.print(sw_prcs_val[i]);
-		Serial.print(" / ");
 		}
-	Serial.println();
 	
 	//모드 변경
-	if(!(isAlarmChange || isClockChange) && sw_prcs_val[MOD_SW]) 
+	if(!(isAlarmChange || isClockChange) && sw_prcs_val[MOD_SW]) {
 		clock_mode = (clock_mode == 2) ? 0 : clock_mode+1;
+		isChangeMode = true;
+		Serial.print("Now mode is ");
+		Serial.println(clock_mode);
+	}
 	//기능실행
 	if(clock_mode == M_CLOCK) showClock();
 	else showTnH(clock_mode ,celsius, humidity);
@@ -180,7 +184,6 @@ void loop()
 		dhtStatus = dht.read();	//TnH sensing
 		celsius = dht.get_Temperature();
 		humidity = dht.get_Humidity();
-		strip.show();
 		lastSec = sec;
 	}
 }

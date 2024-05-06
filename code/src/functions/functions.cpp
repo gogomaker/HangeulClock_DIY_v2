@@ -87,16 +87,15 @@ int sensingSW(int index)		//스위치 센싱 함수
 		Serial.println("switch_pressed");
 		sw_w[index] = time;
     	l_sw_stat[index] = reading;
-		if(sw_w[index] > time-SW_INTERVAL) {
-			Serial.print("Switch is still pressed, but time is over.");
-			Serial.println("So, switch is released by system.");
+		if(sw_w[index] < time-SW_INTERVAL) {
+			Serial.println("Switch is released by system.");
 	    	l_sw_stat[index] = reading;
 			return LONG;
 		} else { return NONE; }
 	} else {										// 스위치가 때졌다면
 		Serial.println("switch_released");
     	l_sw_stat[index] = reading;
-		return (sw_w[index] > time-SW_INTERVAL) ?  LONG : SHORT;
+		return (sw_w[index] < time-SW_INTERVAL) ?  LONG : SHORT;
 	}
 }
 
@@ -105,9 +104,14 @@ void changeLEDbright()			//LED밝기 제어하는 함수
 {
 	bright = (bright >= MAX_BRI) ? INCREASE_BRI : bright+INCREASE_BRI;
 	strip.setBrightness(bright);
-	displayTime(hour, min);
 	Serial.print("Changed brightness: ");
 	Serial.println(bright);
+	if(isChangeMode) {
+		showTnH(clock_mode, celsius, humidity);
+		isChangeMode = false;
+	}
+	else
+		displayTime(hour, min);
 }
 void changeLEDcolor()			//LED색깔 제어하는 함수
 {
@@ -142,19 +146,102 @@ void ledclear()					//LED색상 초기화하는 함수
 	strip.show();
 }
 void startMotion() {			// 시계가 처음 시작될 때 대각선으로 불 켜지는 함수
-	
+	strip.setBrightness(255);
+	int gb[12] = {0, -50, -100, -150, -200, -250, -300, -350, -400, -450, -500, 0};	//해당하는 그룹의 밝기
+	int delta[12] = {10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 4};
+	ledclear();
+	for(int i = 0; i < 120; i++) {
+		for(int j = 0; j < 11; j++) {
+			if(gb[j]>=0) {	//밝기 값이 유효할 때만
+				//해당 그룹의 W.W.LED에 밝기값을 할당한다. 
+				switch(j) {
+				case 0:
+					strip.setPixelColor(0, 0, 0, 0, gb[j]);
+					break;
+				case 1:
+					strip.setPixelColor(1, 0, 0, 0, gb[j]);
+					strip.setPixelColor(10, 0, 0, 0, gb[j]);
+					break;
+				case 2:
+					strip.setPixelColor(2, 0, 0, 0, gb[j]);
+					strip.setPixelColor(9, 0, 0, 0, gb[j]);
+					strip.setPixelColor(11, 0, 0, 0, gb[j]);
+					break;
+				case 3:
+					strip.setPixelColor(3, 0, 0, 0, gb[j]);
+					strip.setPixelColor(8, 0, 0, 0, gb[j]);
+					strip.setPixelColor(12, 0, 0, 0, gb[j]);
+					strip.setPixelColor(22, 0, 0, 0, gb[j]);
+					break;
+				case 4:
+					strip.setPixelColor(4, 0, 0, 0, gb[j]);
+					strip.setPixelColor(7, 0, 0, 0, gb[j]);
+					strip.setPixelColor(13, 0, 0, 0, gb[j]);
+					strip.setPixelColor(21, 0, 0, 0, gb[j]);
+					strip.setPixelColor(23, 0, 0, 0, gb[j]);
+					break;
+				case 5:
+					strip.setPixelColor(6, 0, 0, 0, gb[j]);
+					strip.setPixelColor(14, 0, 0, 0, gb[j]);
+					strip.setPixelColor(20, 0, 0, 0, gb[j]);
+					strip.setPixelColor(24, 0, 0, 0, gb[j]);
+					strip.setPixelColor(34, 0, 0, 0, gb[j]);
+					break;
+				case 6:
+					strip.setPixelColor(5, 0, 0, 0, gb[j]);
+					strip.setPixelColor(15, 0, 0, 0, gb[j]);
+					strip.setPixelColor(19, 0, 0, 0, gb[j]);
+					strip.setPixelColor(25, 0, 0, 0, gb[j]);
+					strip.setPixelColor(33, 0, 0, 0, gb[j]);
+					break;
+				case 7:
+					strip.setPixelColor(16, 0, 0, 0, gb[j]);
+					strip.setPixelColor(18, 0, 0, 0, gb[j]);
+					strip.setPixelColor(26, 0, 0, 0, gb[j]);
+					strip.setPixelColor(32, 0, 0, 0, gb[j]);
+					break;
+				case 8:
+					strip.setPixelColor(17, 0, 0, 0, gb[j]);
+					strip.setPixelColor(27, 0, 0, 0, gb[j]);
+					strip.setPixelColor(31, 0, 0, 0, gb[j]);
+					break;
+				case 9:
+					strip.setPixelColor(28, 0, 0, 0, gb[j]);
+					strip.setPixelColor(30, 0, 0, 0, gb[j]);
+					break;
+				case 10:
+					strip.setPixelColor(29, 0, 0, 0, gb[j]);
+					break;
+				}
+			}
+		}
+		strip.show();
+		for(int j = 0; j < 11; j++) {	//밝기값 재설정
+			if(gb[j] == 250) {
+				delta[j] = -10;
+			}
+			gb[j] += delta[j];
+		}
+		analogWrite(FLICKER_PIN, gb[11]);
+		if(gb[11] == 240) delta[11] = -4;
+		gb[11] += delta[11];
+		delay(15);
+	}
+	strip.setBrightness(MAX_BRI);
 }
 void blink() {
 	if(sec%2) {
 		if(isClockChange || isAlarmChange) {
 			strip.setPixelColor(2, 0, 0, 0, MAX_BRI);
 			strip.setPixelColor(3, 0, 0, 0, MAX_BRI);
+			strip.show();
 		}
 		digitalWrite(FLICKER_PIN, HIGH);
 	} else {
 		if(isClockChange || isAlarmChange) {
 			strip.setPixelColor(2, 0, 0, 0, 0);
 			strip.setPixelColor(3, 0, 0, 0, 0);
+			strip.show();
 		}
 		digitalWrite(FLICKER_PIN, LOW);
 	}
@@ -321,7 +408,7 @@ void showSEGnum(int digit, int num, int isON) {	//세그먼트 형태로 숫자�
 	int red, blue;
 	if(isON){red = 0;	blue = 255;	} 
 	else	{red = 255;	blue = 0;	}
-	if(digit = 10) {
+	if(digit == 10) {
 		for(int i = 0; i < 13; i++) {
 			strip.setPixelColor(numberTEN_segment[num][i], red, 0, blue, 0);
 		}
@@ -385,6 +472,10 @@ void showClock()					// 시계모드 함수
 		else if(!isAlarmChange && !isClockChange) showAlmStat(isonAlarm);
 	}
 
+	if(isChangeMode) {
+		displayTime(hour, min);
+		isChangeMode = false;
+	}
 	if (sec != lastClockSec) {		//매 초마다 시계 기능 작동
 		hour = (hourRtc + hourPlus) % 24;
 		min = (minRtc + minPlus) % 60;
@@ -403,17 +494,25 @@ void showClock()					// 시계모드 함수
 }
 void showTnH(int mode, float c, float h)	//온습도 모드
 {
-	if(sw_prcs_val[LED_SW] == SHORT) 	changeLEDbright();
-	if(tempshow + 2000 < time) {	//2초마다 실행되도록
-		Serial.println("now showing temp and humi");
-		int data;
-		if(mode == M_TEMP)	data = int(c);	//온도모드라면
-		else 				data = int(h);	//습도모드라면
+	if(sw_prcs_val[LED_SW] == SHORT) {
+		isChangeMode = true;
+		changeLEDbright();
+	}
+	if(tempshow+2000<time || isChangeMode) {	//2초마다 실행되도록
+		if(isChangeMode) isChangeMode = false;
+		Serial.print("now showing temp and humi: ");
+		Serial.print(c);
+		Serial.print(" / ");
+		Serial.println(h);
+		int data = (mode == M_TEMP)? c : h;
 		int seatOne = data % 10;
 		int seatTen = (data - seatOne) / 10;
 		ledclear();
 		showSEGnum(10, seatTen, mode-1);
 		showSEGnum( 1, seatOne, mode-1);
+		if(mode == M_TEMP)	strip.setPixelColor(1, 255, 0, 0, 0);
+		else 				strip.setPixelColor(0, 0, 0, 255, 0);
+		strip.show();
 		tempshow = time;
 	}
 }

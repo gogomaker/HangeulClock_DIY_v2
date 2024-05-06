@@ -1,7 +1,7 @@
 {
     "sketch": "code\\code.ino",
-    "configuration": "cpu=atmega328old",
     "board": "arduino:avr:nano",
     "programmer": "arduino:arduinoisp",
-    "port": "COM6"
+    "port": "COM14",
+    "configuration": "cpu=atmega328old"
 }

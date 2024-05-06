@@ -84,6 +84,7 @@ extern unsigned long l_showAstat_Time;		//알람 상태를 보여주기 시작�
 extern byte flick_bri;
 // 모드 관련
 extern byte clock_mode;
+extern bool isChangeMode;
 
 /* 함수 선언 */
 // Function for Displaying Time
@@ -103,7 +104,7 @@ void blink();
 void increasingAlmHour();
 void increasingAlmMin();
 void changeAlmStat();
-void changeAlmStat();
+void showAlmStat(bool t);
 void alarmMotion();
 // Function for controlling time
 void increasingHour();

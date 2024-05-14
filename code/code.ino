@@ -57,7 +57,7 @@ AM2302::AM2302_Sensor dht{DHT_PIN};
 //네오픽셀 관련 변수
 byte r, g, b, w = 0;	// 네오픽셀 LED
 byte bright = 240; 		// 240이 최대, 30이 최소, 8단계 제어
-byte ledmode = 0;		// 13개의 색
+byte ledmode = 6;		// 13개의 색
 long rSeed = 0;			// LED랜덤색상 설정 시드값
 
 //버튼 관련 변수
@@ -123,6 +123,12 @@ void setup()
 	strip.begin();
 	strip.setBrightness(bright);
 	strip.show();
+	if(ledmode) {
+		r = color[ledmode][0];
+		g = color[ledmode][1];
+		b = color[ledmode][2];
+		w = color[ledmode][3];
+	}
 	// 온습도 센서 초기설정
 	if (dht.begin()) {
 		Serial.println("DHTsensor is correct.");
@@ -131,7 +137,6 @@ void setup()
 		Serial.println("DHTsensor is not correct. Please check again");
 		isEnableShowDht = false;
 	}
-	// 시계켜짐모션, DHT센서 특성상 3초가 필요해 해당 함수는 여기 들어간다.  
 	startMotion();
 	// 시계에 시간 출력
 	time = millis();
@@ -141,13 +146,23 @@ void setup()
 	displayTime(hour, min);
 }
 
-void loop() 
+void loop()
 {
 	// 사전설정
 	time = millis();
+	//아래 코드들은 아두이노 내부 millis 기반으로 동작할 때 필요한 코드
 	sec = int(time/1000)%60;
-	if(sec == 60) sec = 0;
-	//get3231Date();
+	if(sec==0 && time%1000==0) {
+		min += 1;
+	}
+	if(min == 60) {
+		min = 0;
+		hour += 1;
+	}
+	if(hour == 24) {
+		hour = 0;
+	}
+	//get3231Date();	//RTC기반 동작일 때 필요한 코드
 	if (!sec && !minRtc && !hourRtc) {	//millis 초기화
 		if(!timer0_millis) isResetMillis = true;
 		if (isResetMillis == true) {

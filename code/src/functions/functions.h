@@ -6,6 +6,7 @@
 #define __FUNCTOINS_H__
 
 // 헤더파일 선언
+#include <Arduino.h>
 #include <Adafruit_NeoPixel.h>
 #include <AM2302-Sensor.h>
 #ifdef __AVR__

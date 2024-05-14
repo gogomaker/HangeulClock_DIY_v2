@@ -148,9 +148,9 @@ void ledclear()					//LED색상 초기화하는 함수
 void startMotion() {			// 시계가 처음 시작될 때 대각선으로 불 켜지는 함수
 	strip.setBrightness(255);
 	int gb[12] = {0, -50, -100, -150, -200, -250, -300, -350, -400, -450, -500, 0};	//해당하는 그룹의 밝기
-	int delta[12] = {10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 4};
+	int delta[12] = {5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 2};
 	ledclear();
-	for(int i = 0; i < 120; i++) {
+	for(int i = 0; i < 240; i++) {
 		for(int j = 0; j < 11; j++) {
 			if(gb[j]>=0) {	//밝기 값이 유효할 때만
 				//해당 그룹의 W.W.LED에 밝기값을 할당한다. 
@@ -218,14 +218,14 @@ void startMotion() {			// 시계가 처음 시작될 때 대각선으로 불 켜
 		strip.show();
 		for(int j = 0; j < 11; j++) {	//밝기값 재설정
 			if(gb[j] == 250) {
-				delta[j] = -10;
+				delta[j] = -5;
 			}
 			gb[j] += delta[j];
 		}
 		analogWrite(FLICKER_PIN, gb[11]);
-		if(gb[11] == 240) delta[11] = -4;
+		if(gb[11] == 250) delta[11] = -2;
 		gb[11] += delta[11];
-		delay(15);
+		delay(10);
 	}
 	strip.setBrightness(MAX_BRI);
 }
@@ -250,7 +250,7 @@ void blink() {
 void increasingAlmHour()		//알람 '시' 값을 증가시키는 함수
 {
 	Serial.println("Alarm hour plus");
-	almHour = (almHour > 23) ? 0 : almHour+1;
+	almHour = (almHour>=23) ? 0 : almHour+1;
 	displayTime(almHour, almMin);
 	strip.setPixelColor(COMMA, 0, MAX_BRI, 0, 0);
 	strip.show();
@@ -258,7 +258,7 @@ void increasingAlmHour()		//알람 '시' 값을 증가시키는 함수
 void increasingAlmMin()			//알람 분 값을 증가시키는 함수
 {
 	Serial.println("Alarm min plus");
-	almMin = (almMin > 59) ? 0 : almMin+1;
+	almMin = (almMin>=59) ? 0 : almMin+1;
 	displayTime(almHour, almMin);
 	strip.setPixelColor(COMMA, 0, MAX_BRI, 0, 0);
 	strip.show();
@@ -277,7 +277,7 @@ void showAlmStat(bool t) {
 	}
 	else {
 		for(int i = 0; i < 8; i++) 
-			strip.setPixelColor(shapeX[i], 230, 127, 19, 0);	// 주황
+			strip.setPixelColor(shapeX[i], 250, 30, 19, 0);	// 주황
 	}
 	strip.show();
 	// 여기에 유일하게 딜레이를 넣은 이유는 간단하다. 
@@ -301,6 +301,7 @@ void alarmMotion()				//알람 구동하는 코드
 			ledclear();
 			delay(400);
 		}
+		isonAlarm = false;
 		clock_mode = 0;
 	}
 }
@@ -309,8 +310,9 @@ void alarmMotion()				//알람 구동하는 코드
 void increasingHour()			//시 값을 증가시키는 함수
 {
 	Serial.println("hour plus");
-	hourPlus = (hourPlus>23) ? 0 : hourPlus+1;
-	hour = (hourRtc+hourPlus) % 24;
+	//hourPlus = (hourPlus>23) ? 0 : hourPlus+1;//RTC기반 동작일 때 필요한 코드
+	//hour = (hourRtc + hourPlus) % 60;			//RTC기반 동작일 때 필요한 코드
+	hour = (hour>=23) ? 0 : hour+1;		// 아두이노 내부 millis 기반일 때 필요한 코드
 	displayTime(hour, min);
 	strip.setPixelColor(COMMA, 0, 0, MAX_BRI, 0);
 	strip.show();
@@ -318,8 +320,9 @@ void increasingHour()			//시 값을 증가시키는 함수
 void increasingMin()			//분 값을 증가시키는 함수
 {
 	Serial.println("min plus");
-	minPlus = minPlus > 59 ? 0 : +1;
-	min = (minRtc + minPlus) % 60;
+	//minPlus = (minPlus>59) ? 0 : minPlus+1;	//RTC기반 동작일 때 필요한 코드
+	//min = (minRtc + minPlus) % 60;			//RTC기반 동작일 때 필요한 코드
+	min = (min>=59) ? 0 : min+1;	// 아두이노 내부 millis 기반일 때 필요한 코드
 	displayTime(hour, min);
 	strip.setPixelColor(COMMA, 0, 0, MAX_BRI, 0);
 	strip.show();
@@ -348,18 +351,13 @@ void get3231Date()				// RTC모듈에서 시간값을 받는 함수
 	Wire.write(0x00); // start at register 0
 	Wire.endTransmission();
 	Wire.requestFrom(DS3231_I2C_ADDRESS, 7); // request seven bytes
-
 	if (Wire.available()) {
 		sec = Wire.read(); // get seconds
 		minRtc = Wire.read(); // get minutes
 		hourRtc = Wire.read();   // get hours
-
 		sec = (((sec & B11110000) >> 4) * 10 + (sec & B00001111)); // convert BCD to decimal
 		minRtc = (((minRtc & B11110000) >> 4) * 10 + (minRtc & B00001111)); // convert BCD to decimal
 		hourRtc = (((hourRtc & B00110000) >> 4) * 10 + (hourRtc & B00001111)); // convert BCD to decimal (assume 24 hour mode)
-	}
-	else {
-		//oh noes, no data!
 	}
 }
 float get3231Temp()				// RTC모듈의 온도를 받는 함수
@@ -369,16 +367,11 @@ float get3231Temp()				// RTC모듈의 온도를 받는 함수
 	Wire.write(0x11);
 	Wire.endTransmission();
 	Wire.requestFrom(DS3231_I2C_ADDRESS, 2);
-
 	if (Wire.available()) {
 		tMSB = Wire.read(); //2's complement int portion
 		tLSB = Wire.read(); //fraction portion
-
 		temp3231 = (tMSB & B01111111); //do 2's math on Tmsb
 		temp3231 += ((tLSB >> 6) * 0.25); //only care about bits 7 & 8
-	}
-	else {
-		//error! no data!
 	}
 	return temp3231;
 }
@@ -386,23 +379,11 @@ float get3231Temp()				// RTC모듈의 온도를 받는 함수
 /* ETC code */
 void showSerialTime()			// 시간을 시리얼 창에 표시할 때 사용하는 함수
 {
-	// 프로그래밍 시에 테스트 용으로만 사용하는 코드이다.
-	Serial.print(hour, DEC);
+	Serial.print(hour);
 	Serial.print(":");
-	Serial.print(min, DEC);
+	Serial.print(min);
 	Serial.print(":");
-	Serial.print(sec, DEC);
-	Serial.print(" - Temp: ");
-	Serial.println(get3231Temp());
-
-	Serial.print(hourRtc);
-	Serial.print(", ");
-	Serial.print(hourPlus);
-	Serial.print(" ; ");
-	Serial.print(minRtc);
-	Serial.print(",");
-	Serial.println(minPlus);
-	Serial.println();
+	Serial.println(sec);
 }
 void showSEGnum(int digit, int num, int isON) {	//세그먼트 형태로 숫자를 출력하는 함수
 	int red, blue;
@@ -436,6 +417,9 @@ void showClock()					// 시계모드 함수
 			Serial.println("end time change");
 			strip.setPixelColor(COMMA, 0, 0, 0, 0);
 			strip.show();
+			//hour = (hourRtc + hourPlus) % 24;		//RTC기반 동작일 때 필요한 코드
+			//min = (minRtc + minPlus) % 60;		//RTC기반 동작일 때 필요한 코드
+			displayTime(hour, min);
 			isClockChange = false;
 		} else {
 			if(!isAlarmChange) {
@@ -460,16 +444,16 @@ void showClock()					// 시계모드 함수
 		} else {
 			if(!isClockChange) {
 				Serial.println("start alarm change");
+				displayTime(almHour, almMin);
 				strip.setPixelColor(COMMA, 0, MAX_BRI, 0, 0);
 				strip.show();
-				displayTime(almHour, almMin);
 				isAlarmChange = true;
 			}
 		}
 	} else if (sw_prcs_val[ALARM_SW]==SHORT && !(sw_prcs_val[TIME_SW]==SHORT)) {
 		if(isClockChange) increasingMin();
 		else if(isAlarmChange) increasingAlmMin();
-		else if(!isAlarmChange && !isClockChange) showAlmStat(isonAlarm);
+		else if(!isAlarmChange && !isClockChange) changeAlmStat();
 	}
 
 	if(isChangeMode) {
@@ -477,8 +461,8 @@ void showClock()					// 시계모드 함수
 		isChangeMode = false;
 	}
 	if (sec != lastClockSec) {		//매 초마다 시계 기능 작동
-		hour = (hourRtc + hourPlus) % 24;
-		min = (minRtc + minPlus) % 60;
+		//hour = (hourRtc + hourPlus) % 24;	//RTC기반 동작일 때 필요한 코드
+		//min = (minRtc + minPlus) % 60;	//RTC기반 동작일 때 필요한 코드
 		if (!sec) {	//매 0초마다(1분 간격으로)
 			if (hourPlus || minPlus) {
 				Serial.println("RTC set");
@@ -486,6 +470,14 @@ void showClock()					// 시계모드 함수
 			}
 			if(isAlarmChange)	displayTime(almHour, almMin);
 			else				displayTime(hour, min);
+			if(isClockChange) {
+				strip.setPixelColor(COMMA, 0, 0, MAX_BRI, 0);
+				strip.show();
+			}
+			else if(isAlarmChange) {
+				strip.setPixelColor(COMMA, 0, MAX_BRI, 0, 0);
+				strip.show();
+			}
 			Serial.println("Updated freauently");
 		}
 		lastClockSec = sec;

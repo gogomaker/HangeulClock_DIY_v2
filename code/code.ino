@@ -68,16 +68,10 @@ int sw_prcs_val[4]  = {0, 0, 0, 0};					// 버튼을 프로그램에서 처리�
 unsigned long l_deb_tme[4] = {0, 0, 0, 0};			// 디바운스 시간 체킹
 unsigned long sw_w[4] = {0, 0, 0, 0};				// 시간 버튼이 언제 눌렸는가
 
-// RTC모듈 관련 변수
-byte tMSB, tLSB;  // RTC온도관련
-float temp3231;
-
 //시간 관련 변수
 extern volatile unsigned long timer0_millis;	// millis 오버플로우 대비 초기화
 unsigned long time = 0;			// 아두이노 내부 밀리초 값
 byte sec, lastSec, lastClockSec = 0;	// 매 초 실행되는 기능을 위해
-byte hourPlus, minPlus = 0;		// 시간 변경 시 임시적으로 값을 저장
-byte minRtc, hourRtc = 0; 		// RTC의 시간값
 byte min, hour = 0;   			// 실제 시간값
 bool isResetMillis = false;		// millis오버플로우 초기화 여부
 bool isClockChange = false;			// 시간 수정여부
@@ -140,9 +134,6 @@ void setup()
 	startMotion();
 	// 시계에 시간 출력
 	time = millis();
-	get3231Date();
-	hour = (hourRtc + hourPlus) % 24;
-	min = (minRtc + minPlus) % 60;
 	displayTime(hour, min);
 }
 
@@ -150,8 +141,19 @@ void loop()
 {
 	// 사전설정
 	time = millis();
-	get3231Date();
-	if (!sec && !minRtc && !hourRtc) {	//millis 초기화
+	sec = int(time/1000)%60;
+	if(sec==0 && time%1000==0) {
+		min += 1;
+	}
+	if(min == 60) {
+		min = 0;
+		hour += 1;
+	}
+	if(hour == 24) {
+		hour = 0;
+	}
+
+	if (!sec && !min && !hour) {	//millis 초기화
 		if(!timer0_millis) isResetMillis = true;
 		if (isResetMillis == true) {
 			for(int i = 0; i < 4; i++) {

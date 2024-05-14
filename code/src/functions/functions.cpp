@@ -310,8 +310,7 @@ void alarmMotion()				//알람 구동하는 코드
 void increasingHour()			//시 값을 증가시키는 함수
 {
 	//Serial.println("hour plus");
-	hourPlus = (hourPlus>23) ? 0 : hourPlus+1;//RTC기반 동작일 때 필요한 코드
-	hour = (hourRtc + hourPlus) % 60;			//RTC기반 동작일 때 필요한 코드
+	hour = (hour>=23) ? 0 : hour+1;		// 아두이노 내부 millis 기반일 때 필요한 코드
 	displayTime(hour, min);
 	strip.setPixelColor(COMMA, 0, 0, MAX_BRI, 0);
 	strip.show();
@@ -319,60 +318,10 @@ void increasingHour()			//시 값을 증가시키는 함수
 void increasingMin()			//분 값을 증가시키는 함수
 {
 	Serial.println("min plus");
-	minPlus = (minPlus>59) ? 0 : minPlus+1;	//RTC기반 동작일 때 필요한 코드
-	min = (minRtc + minPlus) % 60;			//RTC기반 동작일 때 필요한 코드
 	min = (min>=59) ? 0 : min+1;	// 아두이노 내부 millis 기반일 때 필요한 코드
 	displayTime(hour, min);
 	strip.setPixelColor(COMMA, 0, 0, MAX_BRI, 0);
 	strip.show();
-}
-
-/* Function for RTC */
-byte decToBcd(byte val)			// 십진수를 이진화된 십진수로 바꿔주는 함수
-{
-	return ((val / 10 * 16) + (val % 10));
-}
-void set3231Date()				// RTC모듈의 시간을 설정하는 함수
-{
-	if (!min) hour++;
-	Wire.beginTransmission(DS3231_I2C_ADDRESS);
-	Wire.write(0x00);
-	Wire.write(sec);
-	Wire.write(decToBcd(min));
-	Wire.write(decToBcd(hour));
-	Wire.endTransmission();
-	minPlus = hourPlus = 0;
-}
-void get3231Date()				// RTC모듈에서 시간값을 받는 함수
-{
-	// send request to receive data starting at register 0
-	Wire.beginTransmission(DS3231_I2C_ADDRESS);
-	Wire.write(0x00); // start at register 0
-	Wire.endTransmission();
-	Wire.requestFrom(DS3231_I2C_ADDRESS, 7); // request seven bytes
-	if (Wire.available()) {
-		sec = Wire.read(); // get seconds
-		minRtc = Wire.read(); // get minutes
-		hourRtc = Wire.read();   // get hours
-		sec = (((sec & B11110000) >> 4) * 10 + (sec & B00001111)); // convert BCD to decimal
-		minRtc = (((minRtc & B11110000) >> 4) * 10 + (minRtc & B00001111)); // convert BCD to decimal
-		hourRtc = (((hourRtc & B00110000) >> 4) * 10 + (hourRtc & B00001111)); // convert BCD to decimal (assume 24 hour mode)
-	}
-}
-float get3231Temp()				// RTC모듈의 온도를 받는 함수
-{
-	//temp registers (11h-12h) get updated automatically every 64s
-	Wire.beginTransmission(DS3231_I2C_ADDRESS);
-	Wire.write(0x11);
-	Wire.endTransmission();
-	Wire.requestFrom(DS3231_I2C_ADDRESS, 2);
-	if (Wire.available()) {
-		tMSB = Wire.read(); //2's complement int portion
-		tLSB = Wire.read(); //fraction portion
-		temp3231 = (tMSB & B01111111); //do 2's math on Tmsb
-		temp3231 += ((tLSB >> 6) * 0.25); //only care about bits 7 & 8
-	}
-	return temp3231;
 }
 
 /* ETC code */
@@ -416,8 +365,6 @@ void showClock()					// 시계모드 함수
 			// Serial.println("end time change");
 			strip.setPixelColor(COMMA, 0, 0, 0, 0);
 			strip.show();
-			hour = (hourRtc + hourPlus) % 24;		//RTC기반 동작일 때 필요한 코드
-			min = (minRtc + minPlus) % 60;		//RTC기반 동작일 때 필요한 코드
 			displayTime(hour, min);
 			isClockChange = false;
 		} else {
@@ -463,10 +410,6 @@ void showClock()					// 시계모드 함수
 		//hour = (hourRtc + hourPlus) % 24;	//RTC기반 동작일 때 필요한 코드
 		//min = (minRtc + minPlus) % 60;	//RTC기반 동작일 때 필요한 코드
 		if (!sec) {	//매 0초마다(1분 간격으로)
-			if (hourPlus || minPlus) {
-				// Serial.println("RTC set");
-				set3231Date();
-			}
 			if(isAlarmChange)	displayTime(almHour, almMin);
 			else				displayTime(hour, min);
 			if(isClockChange) {

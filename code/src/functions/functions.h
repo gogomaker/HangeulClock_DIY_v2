@@ -61,12 +61,9 @@ extern long rSeed;
 extern byte r, g, b, w, bright, ledmode;
 // 시간 관련
 extern unsigned long time;
-extern byte sec, lastSec, lastClockSec, hourPlus, minPlus, min, hour, minRtc, hourRtc;
+extern byte sec, lastSec, lastClockSec, min, hour;
 extern bool isResetMillis;
 extern bool isClockChange;			// 시간 수정여부
-// RTC기능 관련
-extern byte tMSB, tLSB;
-extern float temp3231;
 // 스위치 관련
 extern bool sw_org_stat[4], l_sw_stat[4];
 extern unsigned long l_deb_tme[4], sw_w[4];
@@ -110,11 +107,6 @@ void alarmMotion();
 // Function for controlling time
 void increasingHour();
 void increasingMin();
-// Function for RTC
-byte decToBcd(byte val);
-void set3231Date();
-void get3231Date();
-float get3231Temp();
 // ETC code
 void showSerialTime();
 void showSEGnum(int digit, int num, int isON);

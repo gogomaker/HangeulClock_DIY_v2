@@ -116,9 +116,9 @@ void setup()
 	pinMode(BUZZER_PIN, OUTPUT);
 	pinMode(FLICKER_PIN, OUTPUT);
 	// 시리얼 모니터
-	Serial.begin(9600);
-	Serial.println("Hangeul Clock v2 is turned ON");
-	Serial.println("Clock start");
+	// Serial.begin(9600);
+	// Serial.println("Hangeul Clock v2 is turned ON");
+	// Serial.println("Clock start");
 	// 네오픽셀 초기설정
 	strip.begin();
 	strip.setBrightness(bright);
@@ -131,10 +131,10 @@ void setup()
 	}
 	// 온습도 센서 초기설정
 	if (dht.begin()) {
-		Serial.println("DHTsensor is correct.");
+		//Serial.println("DHTsensor is correct.");
 		isEnableShowDht = true;
 	} else {
-		Serial.println("DHTsensor is not correct. Please check again");
+		//Serial.println("DHTsensor is not correct. Please check again");
 		isEnableShowDht = false;
 	}
 	startMotion();
@@ -150,19 +150,7 @@ void loop()
 {
 	// 사전설정
 	time = millis();
-	//아래 코드들은 아두이노 내부 millis 기반으로 동작할 때 필요한 코드
-	sec = int(time/1000)%60;
-	if(sec==0 && time%1000==0) {
-		min += 1;
-	}
-	if(min == 60) {
-		min = 0;
-		hour += 1;
-	}
-	if(hour == 24) {
-		hour = 0;
-	}
-	//get3231Date();	//RTC기반 동작일 때 필요한 코드
+	get3231Date();
 	if (!sec && !minRtc && !hourRtc) {	//millis 초기화
 		if(!timer0_millis) isResetMillis = true;
 		if (isResetMillis == true) {
@@ -175,20 +163,15 @@ void loop()
 			isResetMillis = false;
 		}
 	}
-
 	// 알람구동코드
 	if(isonAlarm) alarmMotion();
 	// 스위치 센싱
-	for (int i = 0; i < 4; i++) { //4개의 스위치를 순차적으로 센싱함.
+	for (int i = 0; i < 4; i++)
 		sw_prcs_val[i] = sensingSW(i); 
-		}
-	
 	//모드 변경
 	if(!(isAlarmChange || isClockChange) && sw_prcs_val[MOD_SW]) {
 		clock_mode = (clock_mode == 2) ? 0 : clock_mode+1;
 		isChangeMode = true;
-		Serial.print("Now mode is ");
-		Serial.println(clock_mode);
 	}
 	//기능실행
 	if(clock_mode == M_CLOCK) showClock();
